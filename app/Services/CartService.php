@@ -138,27 +138,50 @@ class CartService
     {
         $sessionId = $sessionId ?: Session::getId();
         
-        $sessionCartItems = ShoppingCart::where('session_id', $sessionId)
-            ->whereNull('customer_id')
-            ->get();
-
+        // Get all guest cart items for this session
+        $sessionCartItems = ShoppingCart::forGuest($sessionId)->with('product')->get();
+        
         foreach ($sessionCartItems as $sessionItem) {
-            $existingItem = ShoppingCart::where('customer_id', $customer->id)
-                ->where('product_id', $sessionItem->product_id)
-                ->where('product_options', $sessionItem->product_options)
-                ->first();
+            try {
+                // Check if customer already has this product with same options
+                $existingItem = ShoppingCart::forCustomer($customer->id)
+                    ->where('product_id', $sessionItem->product_id)
+                    ->where('product_options', $sessionItem->product_options)
+                    ->first();
 
-            if ($existingItem) {
-                $existingItem->quantity += $sessionItem->quantity;
-                $existingItem->save();
-                $sessionItem->delete();
-            } else {
-                $sessionItem->update([
-                    'customer_id' => $customer->id,
-                    'session_id' => null
+                if ($existingItem) {
+                    // Calculate new quantity
+                    $newQuantity = $existingItem->quantity + $sessionItem->quantity;
+                    
+                    // Check stock availability
+                    if ($sessionItem->product->stock_quantity >= $newQuantity) {
+                        $existingItem->update(['quantity' => $newQuantity]);
+                    } else {
+                        // Set to maximum available stock if over
+                        $existingItem->update([
+                            'quantity' => min($newQuantity, $sessionItem->product->stock_quantity)
+                        ]);
+                    }
+                    
+                    // Remove the session item
+                    $sessionItem->delete();
+                } else {
+                    // Just transfer ownership of the cart item to the customer
+                    $sessionItem->update([
+                        'customer_id' => $customer->id,
+                        'session_id' => null
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error merging cart item: ' . $e->getMessage(), [
+                    'session_item_id' => $sessionItem->id,
+                    'customer_id' => $customer->id
                 ]);
+                continue;
             }
         }
+
+        return true;
     }
 
     public function applyCoupon($couponCode, $customerId = null, $sessionId = null)

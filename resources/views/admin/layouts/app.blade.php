@@ -64,31 +64,6 @@
             </div>
 
             <main class="flex-1">
-                <!-- Page header -->
-                <div class="bg-white shadow">
-                    <div class="px-4 sm:px-6 lg:mx-auto lg:px-8">
-                        <div class="py-6 md:flex md:items-center md:justify-between lg:border-t lg:border-gray-200">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center">
-                                    <div>
-                                        <div class="flex items-center">
-                                            <h1 class="ml-3 text-2xl font-bold leading-7 text-gray-900 sm:leading-9 sm:truncate">
-                                                @yield('header', 'Dashboard')
-                                            </h1>
-                                        </div>
-                                        <dl class="mt-2 flex flex-col sm:ml-3 sm:mt-1 sm:flex-row sm:flex-wrap">
-                                            @yield('breadcrumbs')
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-6 flex space-x-3 md:mt-0 md:ml-4">
-                                @yield('header-actions')
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Flash messages -->
                 @if(session('success'))
                     <div class="bg-green-50 border-l-4 border-green-400 p-4 mx-4 mt-4">
@@ -117,7 +92,7 @@
                 @endif
 
                 <!-- Page content -->
-                <div class="py-8">
+                <div>
                     @yield('content')
                 </div>
             </main>

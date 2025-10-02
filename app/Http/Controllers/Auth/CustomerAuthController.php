@@ -50,13 +50,15 @@ class CustomerAuthController extends Controller
             ]);
         }
 
+        // Get session ID before login
+        $sessionId = session()->getId();
         Auth::guard('customer')->login($customer, $request->boolean('remember'));
 
         // Update last login
         $customer->update(['last_login_at' => now()]);
 
         // Transfer guest cart to customer using CartService
-        $this->cartService->transferGuestCart($customer->id);
+        $this->cartService->mergeSessionCartToCustomer($customer, $sessionId);
 
         return redirect()->intended(route('home'));
     }
@@ -87,7 +89,7 @@ class CustomerAuthController extends Controller
         Auth::guard('customer')->login($customer);
 
         // Transfer guest cart to customer using CartService
-        $this->cartService->transferGuestCart($customer->id);
+        $this->cartService->mergeSessionCartToCustomer($customer);
 
         return redirect()->route('home')->with('success', 'Registration successful!');
     }

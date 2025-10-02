@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\KpiController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -112,10 +113,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Protected Admin Routes
     Route::middleware(['auth:admin'])->group(function () {
         // Dashboard
-        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/dashboard', [AdminDashboardController::class, 'index']);
-        Route::get('/chart-data/sales', [AdminDashboardController::class, 'getSalesData']);
-        Route::get('/order-status-data', [AdminDashboardController::class, 'getOrderStatusData']);
+        Route::get('/', [KpiController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [KpiController::class, 'index']);
+        Route::get('/kpi/export', [App\Http\Controllers\Admin\KpiController::class, 'export'])->name('kpi.export');
+        Route::get('/kpi/chart-data', [App\Http\Controllers\Admin\KpiController::class, 'getChartData'])->name('kpi.chart-data');
+        Route::get('/kpi/analytics-summary', [App\Http\Controllers\Admin\KpiController::class, 'getAnalyticsSummary'])->name('kpi.analytics-summary');
+
+    
+
 
         // Admin Profile Management
         Route::prefix('profile')->name('profile.')->group(function () {

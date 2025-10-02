@@ -1,5 +1,3 @@
-# Customers
-
 ## customers
 
 | Field               | Description |
@@ -176,3 +174,47 @@
 | processed_at        |             |
 | created_at          |             |
 | updated_at          |             |
+
+1. Customers → Customer Addresses (One-to-Many)
+
+Explanation: A customer can have multiple addresses, but each address belongs to only one customer.
+
+2. Customers → Orders (One-to-Many)
+
+Explanation: A customer can place many orders, but each order is linked to one customer.
+
+3. Orders → Order Items (One-to-Many)
+
+Explanation: An order can have multiple order items (like a cart), but each order item belongs to one order.
+
+4. Orders → Customer Addresses (One-to-Many)
+
+Explanation: An order is shipped to one address, but multiple orders can share the same address.
+
+5. Products → Order Items (One-to-Many)
+
+Explanation: A product can appear in many order items, but each order item references one product.
+
+6. Products → Product Images (One-to-Many)
+
+Explanation: A product can have multiple product images, but each image belongs to one product.
+
+7. Categories → Products (One-to-Many)
+
+Explanation: A category can have many products, but each product belongs to one category.
+
+8. Shopping Cart → Customers (One-to-Many)
+
+Explanation: A customer can have multiple shopping cart items (products in the cart), but each cart item is linked to one customer.
+
+9. Shopping Cart → Products (One-to-Many)
+
+Explanation: A product can be in many shopping carts, but each cart item is linked to one product.
+
+10. Payments → Orders (One-to-One or One-to-Many)
+
+Explanation: Typically, one order has one payment, but depending on the payment method, an order could have multiple payments. (One-to-One or One-to-Many based on system setup).
+
+11. Inventory Logs → Products (One-to-Many)
+
+Explanation: A product can have many inventory log entries (to track stock changes), but each inventory log is tied to one product.

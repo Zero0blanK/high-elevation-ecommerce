@@ -20,12 +20,15 @@ class DashboardController extends Controller
         $this->analyticsService = $analyticsService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         // Get current month and last month dates
         $thisMonth = now()->startOfMonth();
         $lastMonth = now()->subMonth()->startOfMonth();
         $lastMonthEnd = now()->subMonth()->endOfMonth();
+
+        // Get timeframe from request or default to 'today'
+        $timeframe = $request->get('timeframe', 'today');
 
         // Fetch metrics
         $metrics = [
@@ -48,56 +51,90 @@ class DashboardController extends Controller
         $recentOrders = Order::with('customer')
             ->latest()
             ->take(5)
-            ->get()
-            ->map(function($order) {
-                return [
-                    'type' => 'order',
-                    'title' => "New order #{$order->order_number}",
-                    'description' => "Order placed by {$order->customer->full_name}",
-                    'amount' => $order->total_amount,
-                    'time' => $order->created_at,
-                    'status' => $order->status
-                ];
-            });
-
-        // Recent customers
-        $recentCustomers = Customer::latest()
-            ->take(3)
-            ->get()
-            ->map(function($customer) {
-                return [
-                    'type' => 'customer',
-                    'title' => 'New customer registered',
-                    'description' => "{$customer->full_name} joined",
-                    'time' => $customer->created_at
-                ];
-            });
-
-        $recentActivity = $recentOrders->concat($recentCustomers)
-            ->sortByDesc('time')
-            ->take(8);
-
-        // Get low stock products
-        $lowStockProducts = Product::where('stock_quantity', '<=', DB::raw('low_stock_threshold'))
-            ->where('is_active', true)
-            ->orderBy('stock_quantity')
-            ->take(5)
             ->get();
 
-        // Get top selling products
-        $topSellingProducts = Product::withCount(['orderItems as total_sold' => function($query) {
-                $query->select(DB::raw('SUM(quantity)'));
-            }])
-            ->orderByDesc('total_sold')
-            ->take(5)
-            ->get();
+        $kpis = $this->getKpiData($timeframe);
 
-        return view('admin.dashboard', compact(
-            'metrics',
-            'recentActivity',
-            'lowStockProducts',
-            'topSellingProducts'
-        ));
+        return view('admin.dashboard', compact('metrics', 'recentOrders', 'timeframe', 'kpis'));
+    }
+
+    private function getKpiData($timeframe)
+    {
+        $dateRange = $this->getDateRange($timeframe);
+        $orders = Order::whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        $customers = Customer::whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+
+        return [
+            'sales' => [
+                'total_revenue' => $orders->where('payment_status', 'paid')->sum('total_amount'),
+                'average_order_value' => $orders->where('payment_status', 'paid')->avg('total_amount') ?? 0,
+                'total_orders' => $orders->count(),
+                'completed_orders' => $orders->where('status', 'completed')->count(),
+                'cancelled_orders' => $orders->where('status', 'cancelled')->count(),
+            ],
+            'customers' => [
+                'new_customers' => $customers->count(),
+                'total_customers' => Customer::count(),
+            ],
+            'products' => [
+                'total_products' => Product::count(),
+                'low_stock_products' => Product::where('stock_quantity', '<=', DB::raw('low_stock_threshold'))->count(),
+                'out_of_stock' => Product::where('stock_quantity', 0)->count(),
+                'top_selling' => $this->getTopSellingProducts($dateRange['start'], $dateRange['end']),
+            ],
+        ];
+    }
+
+    private function getDateRange($timeframe)
+    {
+        $now = Carbon::now();
+        
+        return match($timeframe) {
+            'today' => [
+                'start' => $now->copy()->startOfDay(),
+                'end' => $now->copy()->endOfDay(),
+            ],
+            'yesterday' => [
+                'start' => $now->copy()->subDay()->startOfDay(),
+                'end' => $now->copy()->subDay()->endOfDay(),
+            ],
+            'this_week' => [
+                'start' => $now->copy()->startOfWeek(),
+                'end' => $now->copy()->endOfWeek(),
+            ],
+            'last_week' => [
+                'start' => $now->copy()->subWeek()->startOfWeek(),
+                'end' => $now->copy()->subWeek()->endOfWeek(),
+            ],
+            'this_month' => [
+                'start' => $now->copy()->startOfMonth(),
+                'end' => $now->copy()->endOfMonth(),
+            ],
+            'last_month' => [
+                'start' => $now->copy()->subMonth()->startOfMonth(),
+                'end' => $now->copy()->subMonth()->endOfMonth(),
+            ],
+            'this_year' => [
+                'start' => $now->copy()->startOfYear(),
+                'end' => $now->copy()->endOfYear(),
+            ],
+            default => [
+                'start' => $now->copy()->startOfDay(),
+                'end' => $now->copy()->endOfDay(),
+            ],
+        };
+    }
+
+    private function getTopSellingProducts($startDate, $endDate)
+    {
+        return Product::withCount(['orderItems as total_sold' => function($query) use ($startDate, $endDate) {
+            $query->whereHas('order', function($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate]);
+            })->select(DB::raw('SUM(quantity)'));
+        }])
+        ->orderByDesc('total_sold')
+        ->take(5)
+        ->get();
     }
 
     public function getChartData($type, $period = '7days')
@@ -249,17 +286,6 @@ class DashboardController extends Controller
         return \App\Models\Product::where('stock_quantity', '<=', 10)
             ->where('stock_quantity', '>', 0)
             ->orderBy('stock_quantity', 'asc')
-            ->take(5)
-            ->get();
-    }
-
-    public function getTopSellingProducts()
-    {
-        return \App\Models\Product::withCount(['orderItems as total_sold' => function($query) {
-                $query->select(\DB::raw('SUM(quantity)'));
-            }])
-            ->having('total_sold', '>', 0)
-            ->orderBy('total_sold', 'desc')
             ->take(5)
             ->get();
     }
