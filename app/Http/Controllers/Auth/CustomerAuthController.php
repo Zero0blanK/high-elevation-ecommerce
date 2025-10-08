@@ -65,33 +65,73 @@ class CustomerAuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'email' => 'required|email|unique:customers,email',
-            'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
-            'date_of_birth' => 'nullable|date',
-            'marketing_emails' => 'boolean'
-        ]);
+        try {
+            $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => [
+                    'required',
+                    'string',
+                    'email',
+                    'max:255',
+                    'unique:customers',
+                    function ($attribute, $value, $fail) {
+                        $allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
+                        $domain = explode('@', $value)[1] ?? '';
+                        
+                        if (!in_array(strtolower($domain), $allowedDomains)) {
+                            $fail('Please use an email from: ' . implode(', ', $allowedDomains));
+                        }
+                    },
+                ],
+                'password' => 'required|string|min:8|confirmed',
+                'phone' => 'nullable|string|max:11',
+                'date_of_birth' => 'nullable|date',
+                'marketing_emails' => 'boolean'
+            ]);
 
-        $customer = Customer::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'phone' => $request->phone,
-            'date_of_birth' => $request->date_of_birth,
-            'marketing_emails' => $request->boolean('marketing_emails'),
-            'is_active' => true,
-        ]);
+            $customer = Customer::create([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'date_of_birth' => $request->date_of_birth,
+                'is_active' => true,
+            ]);
 
-        Auth::guard('customer')->login($customer);
+            Auth::guard('customer')->login($customer);
 
-        // Transfer guest cart to customer using CartService
-        $this->cartService->mergeSessionCartToCustomer($customer);
+            // Transfer guest cart to customer using CartService
+            $this->cartService->mergeSessionCartToCustomer($customer);
 
-        return redirect()->route('home')->with('success', 'Registration successful!');
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'redirect' => route('home'),
+                    'message' => 'Registration successful!'
+                ]);
+            }
+
+            return redirect()->route('home')->with('success', 'Registration successful!');
+
+        } catch (ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['general' => ['An unexpected error occurred. Please try again.']]
+                ], 500);
+            }
+            throw $e;
+        }
     }
 
     public function logout(Request $request)

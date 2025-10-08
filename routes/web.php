@@ -85,6 +85,7 @@ Route::middleware(['auth:customer'])->group(function () {
         Route::get('/', [ProfileController::class, 'dashboard'])->name('dashboard');
         Route::get('/profile', [ProfileController::class, 'profile'])->name('profile');
         Route::patch('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+        Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('password.update');
         Route::get('/addresses', [ProfileController::class, 'addresses'])->name('addresses');
         Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('addresses.store');
         Route::patch('/addresses/{address}', [ProfileController::class, 'updateAddress'])->name('addresses.update');

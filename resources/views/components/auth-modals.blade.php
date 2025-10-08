@@ -1,6 +1,8 @@
 <div x-data="{
     loginOpen: false,
     registerOpen: false,
+    formErrors: {},
+    isSubmitting: false,
     
     openLogin() {
         this.loginOpen = true;
@@ -25,7 +27,79 @@
     switchToLogin() {
         this.registerOpen = false;
         this.loginOpen = true;
-    }
+    },
+
+    handleRegisterSubmit() {
+        this.isSubmitting = true;
+        this.formErrors = {};
+        const form = event.target;
+        const submitBtn = form.querySelector(`button[type='submit']`);
+        const originalBtnText = submitBtn.innerHTML;
+
+        submitBtn.innerHTML = `
+            <svg class='animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+                <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+            </svg>
+            Creating account...
+        `;
+        submitBtn.disabled = true;
+
+        form.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid', 'border-red-500');
+        });
+        form.querySelectorAll('.error-message').forEach(el => el.remove());
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector(`meta[name='csrf-token']`).content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(new FormData(form)))
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const successDiv = document.createElement('div');
+                successDiv.className = 'mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md';
+                successDiv.textContent = 'Account created successfully! Redirecting...';
+                form.insertBefore(successDiv, form.firstChild);
+
+                // Redirect after delay
+                setTimeout(() => {
+                    window.location.href = data.redirect || '/';
+                }, 1500);
+            } else {
+                // Show validation errors
+                this.formErrors = data.errors;
+                Object.keys(data.errors).forEach(field => {
+                    const input = form.querySelector(`[name='${field}']`);
+                    if (input) {
+                        input.classList.add('is-invalid', 'border-red-500');
+                        const errorDiv = document.createElement('p');
+                        errorDiv.className = 'mt-1 text-sm text-red-600 error-message';
+                        errorDiv.textContent = data.errors[field][0];
+                        input.parentNode.insertBefore(errorDiv, input.nextSibling);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Registration error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md';
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            form.insertBefore(errorDiv, form.firstChild);
+        })
+        .finally(() => {
+            this.isSubmitting = false;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
+    },
 }" 
 @keydown.escape="closeAll()"
 x-init="
@@ -104,11 +178,11 @@ x-init="
                                         Remember me
                                     </label>
                                 </div>
-                                <div class="text-sm">
+                                <!-- <div class="text-sm">
                                     <a href="#" class="font-medium text-amber-600 hover:text-amber-500">
                                         Forgot password?
                                     </a>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>
@@ -152,7 +226,7 @@ x-init="
             <div class="fixed inset-0 bg-gray-400/40 bg-opacity-50 transition-opacity" @click="closeAll()"></div>
 
             <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full max-h-screen overflow-y-auto">
-                <form action="{{ route('customer.register') }}" method="POST">
+                <form @submit.prevent="handleRegisterSubmit" action="{{ route('customer.register') }}" method="POST">
                     @csrf
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="flex justify-between items-center mb-4">
@@ -163,17 +237,15 @@ x-init="
                                 </svg>
                             </button>
                         </div>
-                        
-                        <!-- Display register errors -->
-                        @if($errors->any())
-                            <div class="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-                                <ul class="list-disc list-inside text-sm">
-                                    @foreach($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
+
+                        <div x-show="Object.keys(formErrors).length > 0" 
+                            class="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+                            <ul class="list-disc list-inside text-sm">
+                                <template x-for="(errors, field) in formErrors" :key="field">
+                                    <li x-text="errors[0]"></li>
+                                </template>
+                            </ul>
+                        </div>
                         
                         <div class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
@@ -209,6 +281,9 @@ x-init="
                                        value="{{ old('email') }}"
                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm @error('email') border-red-500 @enderror" 
                                        placeholder="Enter your email">
+                                    @error('email')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
                             </div>
                             
                             <div>
@@ -216,9 +291,12 @@ x-init="
                                 <input id="register_phone" 
                                        name="phone" 
                                        type="tel" 
+                                       pattern="[0-9]*"
+                                       inputmode="numeric"
                                        value="{{ old('phone') }}"
                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm" 
-                                       placeholder="Phone number (optional)">
+                                       placeholder="Phone number (optional)"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                             </div>
                             
                             <div class="grid grid-cols-2 gap-4">
