@@ -3,6 +3,10 @@
 
 @section('title', 'My Addresses')
 
+@push('meta')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+@endpush
+
 @section('content')
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16">
     <div class="mb-8 flex justify-between items-center">
@@ -206,8 +210,220 @@
     }
 
     function editAddress(id) {
-        // Implementation for editing address would go here
-        console.log('Edit address with ID:', id);
+        // Set form action using Laravel route
+        const form = document.getElementById('updateAddressForm');
+        form.action = "{{ url('account/addresses') }}/" + id;
+        
+        // Make an AJAX request to get address details
+        fetch(`{{ route('account.addresses.show') }}?address_id=${id}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to load address');
+            }
+            const address = data.address;
+            // Debug output
+            console.log('Received address data:', address);
+            
+            // Populate form fields
+            form.querySelector('[name="type"]').value = address.type || '';
+            form.querySelector('[name="first_name"]').value = address.first_name || '';
+            form.querySelector('[name="last_name"]').value = address.last_name || '';
+            form.querySelector('[name="company"]').value = address.company || '';
+            form.querySelector('[name="address_line_1"]').value = address.address_line_1 || '';
+            form.querySelector('[name="address_line_2"]').value = address.address_line_2 || '';
+            form.querySelector('[name="city"]').value = address.city || '';
+            form.querySelector('[name="state"]').value = address.state || '';
+            form.querySelector('[name="postal_code"]').value = address.postal_code || '';
+            form.querySelector('[name="country"]').value = address.country || '';
+            form.querySelector('#edit_is_default').checked = address.is_default || false;
+                
+                // Show the modal
+                document.getElementById('editAddressModal').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error fetching address:', error);
+                alert('Failed to load address details. Please try again.');
+            });
+    }
+
+    function closeEditAddressModal() {
+        document.getElementById('editAddressModal').classList.add('hidden');
+    }
+
+    function handleAddressUpdate(event) {
+        event.preventDefault();
+        const form = event.target;
+        const url = form.action;
+        const formData = new FormData(form);
+
+        // Convert FormData to URL-encoded string
+        const data = new URLSearchParams(formData);
+        data.append('_method', 'PATCH'); // Add the method spoofing
+
+        fetch(url, {
+            method: 'POST', // Always use POST for form submission
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: data
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            window.location.reload(); // Reload the page to show updated data
+        })
+        .catch(error => {
+            console.error('Error updating address:', error);
+            alert('Failed to update address. Please try again.');
+        });
     }
 </script>
+
+<!-- Edit Address Modal -->
+<div id="editAddressModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Edit Address</h3>
+                <button onclick="closeEditAddressModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="updateAddressForm" method="POST" class="space-y-4" onsubmit="handleAddressUpdate(event)">
+                @csrf
+                @method('PATCH')
+                
+                <!-- Address Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Address Type</label>
+                    <select name="type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                        <option value="shipping">Shipping</option>
+                        <option value="billing">Billing</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+
+                @if ($errors->any())
+                    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- First Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">First Name</label>
+                        <input type="text" name="first_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                    </div>
+
+                    <!-- Last Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <input type="text" name="last_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                    </div>
+                </div>
+
+                <!-- Company -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Company (Optional)</label>
+                    <input type="text" name="company" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                </div>
+
+                <!-- Address Line 1 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Address Line 1</label>
+                    <input type="text" name="address_line_1" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                </div>
+
+                <!-- Address Line 2 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Address Line 2 (Optional)</label>
+                    <input type="text" name="address_line_2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- City -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">City</label>
+                        <input type="text" name="city" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                    </div>
+
+                    <!-- State -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">State</label>
+                        <input type="text" name="state" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                    </div>
+
+                    <!-- Postal Code -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Postal Code</label>
+                        <input type="text" name="postal_code" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                    </div>
+                </div>
+
+                <!-- Country -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Country</label>
+                    <select name="country" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500">
+                        <option value="United States">United States</option>
+                        <option value="Canada">Canada</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <!-- Add more countries as needed -->
+                    </select>
+                </div>
+
+                <!-- Default Address -->
+                <input type="hidden" name="is_default" value="0">
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_default" id="edit_is_default" value="1" class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
+                    <label for="edit_is_default" class="ml-2 block text-sm text-gray-900">Set as default address</label>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeEditAddressModal()" class="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700">
+                        Update Address
+                    </button>
+                </div>
+            </form>
+        </div>  
+    </div>
+</div>
 @endsection

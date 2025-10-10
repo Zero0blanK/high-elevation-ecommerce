@@ -337,4 +337,26 @@ class ProfileController extends Controller
             return back()->withErrors(['general' => $errorMessage]);
         }
     }
+
+    public function getUserAddress(Request $request)
+    {
+        $customer = Auth::guard('customer')->user();
+        $addressId = $request->input('address_id');
+
+        $address = CustomerAddress::where('customer_id', $customer->id)
+            ->where('id', $addressId)
+            ->first();
+
+        if ($address) {
+            return response()->json([
+                'success' => true,
+                'address' => $address
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Address not found.'
+            ], 404);
+        }
+    }
 }

@@ -92,6 +92,7 @@ Route::middleware(['auth:customer'])->group(function () {
         Route::delete('/addresses/{address}', [ProfileController::class, 'destroyAddress'])->name('addresses.destroy');
         Route::get('/preferences', [ProfileController::class, 'preferences'])->name('preferences');
         Route::patch('/preferences', [ProfileController::class, 'updatePreferences'])->name('preferences.update');
+        Route::get('/addresses/get', [ProfileController::class, 'getUserAddress'])->name('addresses.show');
     });
 });
 // Contact Routes
