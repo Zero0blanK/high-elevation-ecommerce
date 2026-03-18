@@ -2,29 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rules\Password;
 use App\Models\CustomerAddress;
 
 class ProfileController extends Controller
 {
-    public function __construct()
+    protected CustomerService $customerService;
+
+    public function __construct(CustomerService $customerService)
     {
-        $this->middleware('auth:customer');
+        $this->customerService = $customerService;
     }
 
     public function dashboard()
     {
         $customer = Auth::guard('customer')->user();
+        $analytics = $this->customerService->getCustomerAnalytics($customer);
         $recentOrders = $customer->orders()->latest()->take(5)->get();
-        $totalOrders = $customer->orders()->count();
-        $totalSpent = $customer->orders()->where('payment_status', 'paid')->sum('total_amount');
         
-        return view('account.dashboard', compact('customer', 'recentOrders', 'totalOrders', 'totalSpent'));
+        return view('account.dashboard', [
+            'customer' => $customer,
+            'recentOrders' => $recentOrders,
+            'totalOrders' => $analytics['total_orders'],
+            'totalSpent' => $analytics['total_spent'],
+        ]);
     }
 
     public function profile()
@@ -114,6 +120,7 @@ class ProfileController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'company' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
             'address_line_1' => 'required|string|max:255',
             'address_line_2' => 'nullable|string|max:255',
             'city' => 'required|string|max:255',
@@ -136,9 +143,31 @@ class ProfileController extends Controller
             $address->is_default = $isDefault;
             $address->save();
 
+            // Return JSON for AJAX requests
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Address added successfully!',
+                    'address' => [
+                        'id' => $address->id,
+                        'full_name' => $address->first_name . ' ' . $address->last_name,
+                        'full_address' => $address->address_line_1 . ', ' . $address->city . ', ' . $address->state . ' ' . $address->postal_code,
+                        'address_line_1' => $address->address_line_1,
+                        'city' => $address->city,
+                        'is_default' => $address->is_default,
+                    ]
+                ]);
+            }
+
             return redirect()->route('account.addresses')
                 ->with('success', 'Address added successfully!');
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to save address: ' . $e->getMessage()
+                ], 500);
+            }
             return back()
                 ->withInput()
                 ->with('error', 'Failed to save address: ' . $e->getMessage());

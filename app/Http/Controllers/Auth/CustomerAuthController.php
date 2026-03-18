@@ -39,12 +39,24 @@ class CustomerAuthController extends Controller
         $customer = Customer::where('email', $request->email)->first();
 
         if (!$customer || !Hash::check($request->password, $customer->password)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'The provided credentials are incorrect.',
+                    'errors' => ['email' => ['The provided credentials are incorrect.']]
+                ], 422);
+            }
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         if (!$customer->is_active) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Your account has been deactivated.',
+                    'errors' => ['email' => ['Your account has been deactivated. Please contact support.']]
+                ], 422);
+            }
             return back()->withErrors([
                 'email' => 'Your account has been deactivated. Please contact support.'
             ]);
@@ -59,6 +71,14 @@ class CustomerAuthController extends Controller
 
         // Transfer guest cart to customer using CartService
         $this->cartService->mergeSessionCartToCustomer($customer, $sessionId);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'redirect' => route('home'),
+                'message' => 'Login successful!'
+            ]);
+        }
 
         return redirect()->intended(route('home'));
     }

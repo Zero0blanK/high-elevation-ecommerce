@@ -48,8 +48,8 @@
                         <div class="space-y-6">
                             @foreach($order->items as $item)
                                 <div class="flex items-start space-x-4">
-                                    @if($item->product && $item->product->image_url)
-                                        <img src="{{ $item->product->image_url }}" 
+                                    @if($item->product && $item->product->primaryImage)
+                                        <img src="{{ $item->product->primaryImage->image_url }}" 
                                              alt="{{ $item->product->name }}"
                                              class="w-16 h-16 object-cover rounded-md">
                                     @else

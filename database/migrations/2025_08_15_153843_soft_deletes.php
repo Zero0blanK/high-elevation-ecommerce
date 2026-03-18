@@ -10,7 +10,6 @@ return new class extends Migration
     protected $tables = [
         'products' => 'product',
         'categories' => 'category', 
-        'users' => 'user',
         'orders' => 'order',
         'customers' => 'customer',
         'product_images' => 'productimage'

@@ -23,40 +23,48 @@ class AnalyticsController extends Controller
 
     public function salesReport(Request $request)
     {
-        $request->validate([
-            'period_start' => 'required|date',
-            'period_end' => 'required|date|after_or_equal:period_start'
-        ]);
+        $report = null;
 
-        try {
-            $report = $this->analyticsService->generateSalesReport(
-                $request->period_start,
-                $request->period_end
-            );
+        if ($request->filled(['period_start', 'period_end'])) {
+            $request->validate([
+                'period_start' => 'required|date',
+                'period_end' => 'required|date|after_or_equal:period_start',
+            ]);
 
-            return view('admin.analytics.sales', compact('report'));
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error generating sales report: ' . $e->getMessage());
+            try {
+                $report = $this->analyticsService->generateSalesReport(
+                    $request->period_start,
+                    $request->period_end
+                );
+            } catch (\Exception $e) {
+                return back()->with('error', 'Error generating sales report: ' . $e->getMessage());
+            }
         }
+
+        return view('admin.analytics.sales', compact('report'));
     }
 
     public function customerReport(Request $request)
     {
-        $request->validate([
-            'period_start' => 'required|date',
-            'period_end' => 'required|date|after_or_equal:period_start'
-        ]);
+        $report = null;
 
-        try {
-            $report = $this->analyticsService->generateCustomerReport(
-                $request->period_start,
-                $request->period_end
-            );
+        if ($request->filled(['period_start', 'period_end'])) {
+            $request->validate([
+                'period_start' => 'required|date',
+                'period_end' => 'required|date|after_or_equal:period_start',
+            ]);
 
-            return view('admin.analytics.customers', compact('report'));
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error generating customer report: ' . $e->getMessage());
+            try {
+                $report = $this->analyticsService->generateCustomerReport(
+                    $request->period_start,
+                    $request->period_end
+                );
+            } catch (\Exception $e) {
+                return back()->with('error', 'Error generating customer report: ' . $e->getMessage());
+            }
         }
+
+        return view('admin.analytics.customers', compact('report'));
     }
 
     public function inventoryReport()
@@ -73,9 +81,9 @@ class AnalyticsController extends Controller
     {
         $request->validate([
             'type' => 'required|in:sales,customers,inventory',
-            'format' => 'required|in:pdf,excel,csv',
+            'format' => 'required|in:csv',
             'period_start' => 'required_unless:type,inventory|date',
-            'period_end' => 'required_unless:type,inventory|date'
+            'period_end' => 'required_unless:type,inventory|date',
         ]);
 
         try {
@@ -97,69 +105,89 @@ class AnalyticsController extends Controller
                     break;
             }
 
-            return $this->downloadReport($report, $request->format);
+            return $this->exportToCsv($report);
         } catch (\Exception $e) {
             return back()->with('error', 'Error exporting report: ' . $e->getMessage());
         }
     }
 
-    private function downloadReport($report, $format)
-    {
-        switch ($format) {
-            case 'pdf':
-                return $this->exportToPdf($report);
-            case 'excel':
-                return $this->exportToExcel($report);
-            case 'csv':
-                return $this->exportToCsv($report);
-        }
-    }
-
-    private function exportToPdf($report)
-    {
-        // Implement PDF export using libraries like DomPDF or TCPDF
-        $pdf = app('dompdf.wrapper');
-        $pdf->loadView('admin.analytics.pdf', compact('report'));
-        return $pdf->download($report->type . '_report_' . now()->format('Y-m-d') . '.pdf');
-    }
-
-    private function exportToExcel($report)
-    {
-        // Implement Excel export using Laravel Excel
-        return \Excel::download(new \App\Exports\AnalyticsReportExport($report), 
-            $report->type . '_report_' . now()->format('Y-m-d') . '.xlsx');
-    }
-
     private function exportToCsv($report)
     {
-        // Implement CSV export
-        $filename = $report->type . '_report_' . now()->format('Y-m-d') . '.csv';
+        $type = $report['type'];
+        $data = $report['data'];
+        $filename = $type . '_report_' . now()->format('Y-m-d') . '.csv';
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        return response()->stream(function () use ($report) {
+        return response()->stream(function () use ($type, $data) {
             $handle = fopen('php://output', 'w');
-            
-            // Write CSV headers and data based on report type
-            $this->writeCsvData($handle, $report);
-            
+
+            switch ($type) {
+                case 'sales':
+                    fputcsv($handle, ['Sales Report']);
+                    fputcsv($handle, ['Total Revenue', '$' . number_format($data['total_revenue'] ?? 0, 2)]);
+                    fputcsv($handle, ['Total Orders', $data['total_orders'] ?? 0]);
+                    fputcsv($handle, ['Average Order Value', '$' . number_format($data['average_order_value'] ?? 0, 2)]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Date', 'Revenue', 'Orders']);
+                    foreach ($data['daily_sales'] ?? [] as $day) {
+                        fputcsv($handle, [
+                            $day['date'] ?? '',
+                            '$' . number_format($day['total'] ?? 0, 2),
+                            $day['orders'] ?? 0,
+                        ]);
+                    }
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Top Products', 'Units Sold', 'Revenue']);
+                    foreach ($data['top_products'] ?? [] as $product) {
+                        fputcsv($handle, [
+                            $product['name'] ?? '',
+                            $product['total_sold'] ?? 0,
+                            '$' . number_format($product['revenue'] ?? 0, 2),
+                        ]);
+                    }
+                    break;
+
+                case 'customers':
+                    fputcsv($handle, ['Customer Report']);
+                    fputcsv($handle, ['New Customers', $data['new_customers'] ?? 0]);
+                    fputcsv($handle, ['Returning Customers', $data['returning_customers'] ?? 0]);
+                    fputcsv($handle, ['Avg Lifetime Value', '$' . number_format($data['customer_lifetime_value'] ?? 0, 2)]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Customer', 'Email', 'Total Spent', 'Orders']);
+                    foreach ($data['top_customers'] ?? [] as $customer) {
+                        fputcsv($handle, [
+                            ($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''),
+                            $customer['email'] ?? '',
+                            '$' . number_format($customer['total_spent'] ?? 0, 2),
+                            $customer['order_count'] ?? 0,
+                        ]);
+                    }
+                    break;
+
+                case 'inventory':
+                    fputcsv($handle, ['Inventory Report']);
+                    fputcsv($handle, ['Total Products', $data['total_products'] ?? 0]);
+                    fputcsv($handle, ['Total Stock', $data['total_stock'] ?? 0]);
+                    fputcsv($handle, ['Inventory Value', '$' . number_format($data['inventory_value'] ?? 0, 2)]);
+                    fputcsv($handle, ['Out of Stock', $data['out_of_stock_count'] ?? 0]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Category', 'Products', 'Stock', 'Value']);
+                    foreach ($data['category_breakdown'] ?? [] as $cat) {
+                        fputcsv($handle, [
+                            $cat['name'] ?? '',
+                            $cat['product_count'] ?? 0,
+                            $cat['total_stock'] ?? 0,
+                            '$' . number_format($cat['stock_value'] ?? 0, 2),
+                        ]);
+                    }
+                    break;
+            }
+
             fclose($handle);
         }, 200, $headers);
-    }
-
-    private function writeCsvData($handle, $report)
-    {
-        switch ($report->type) {
-            case 'sales':
-                fputcsv($handle, ['Date', 'Revenue', 'Orders', 'Average Order Value']);
-                foreach ($report->data['daily_sales'] as $day) {
-                    fputcsv($handle, [$day['date'], $day['total'], $day['orders'], 
-                        $day['orders'] > 0 ? $day['total'] / $day['orders'] : 0]);
-                }
-                break;
-            // Add other report types as needed
-        }
     }
 }

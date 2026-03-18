@@ -8,7 +8,7 @@ class CategoryRequest extends FormRequest
 {
     public function authorize()
     {
-        return auth('admin')->check() && auth('admin')->user()->canManageProducts();
+        return auth('admin')->check();
     }
 
     public function rules()

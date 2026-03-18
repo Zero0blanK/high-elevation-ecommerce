@@ -16,16 +16,31 @@ class Category extends Model
         'slug',
         'description',
         'image_url',
-        'is_active'
+        'parent_id',
+        'sort_order',
+        'meta_title',
+        'meta_description',
+        'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
     }
 
     public function scopeActive($query)

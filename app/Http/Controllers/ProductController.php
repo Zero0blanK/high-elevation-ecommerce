@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Services\ProductService;
+use App\Services\ReviewService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     protected $productService;
+    protected $reviewService;
 
-    public function __construct(ProductService $productService)
+    public function __construct(ProductService $productService, ReviewService $reviewService)
     {
         $this->productService = $productService;
+        $this->reviewService = $reviewService;
     }
 
     public function index(Request $request)
@@ -41,8 +44,20 @@ class ProductController extends Controller
 
         $product->load(['category', 'primaryImage']);
         $relatedProducts = $this->productService->getRelatedProducts($product, 4);
+        $reviews = $this->reviewService->getProductReviews($product->id, 10);
 
-        return view('products.show', compact('product', 'relatedProducts'));
+        // Check if logged-in customer can write a review
+        $canReview = false;
+        $hasReviewed = false;
+        $customer = auth('customer')->user();
+        
+        if ($customer) {
+            $hasPurchased = $this->reviewService->hasPurchasedProduct($customer->id, $product->id);
+            $hasReviewed = $this->reviewService->hasReviewedProduct($customer->id, $product->id);
+            $canReview = $hasPurchased && !$hasReviewed;
+        }
+
+        return view('products.show', compact('product', 'relatedProducts', 'reviews', 'canReview', 'hasReviewed'));
     }
 
     public function category($categorySlug)

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Carbon\Carbon;
 
 class Coupon extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'code',
@@ -37,6 +38,12 @@ class Coupon extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function customers()
+    {
+        return $this->belongsToMany(Customer::class, 'coupon_customer')
+            ->withPivot('order_id', 'used_at');
     }
 
     public function isValid()
@@ -91,7 +98,7 @@ class Coupon extends Model
             return 0;
         }
 
-        if ($this->type === 'fixed') {
+        if ($this->type === 'fixed_amount') {
             $discount = $this->value;
         } else {
             $discount = ($amount * $this->value) / 100;

@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class BulkEmail extends Mailable implements ShouldQueue
+class BulkEmail extends Mailable
 {
     use Queueable, SerializesModels;
 

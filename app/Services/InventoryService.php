@@ -88,7 +88,7 @@ class InventoryService
     private function sendLowStockAlert(Product $product)
     {
         // Get admin emails
-        $adminEmails = \App\Models\AdminUser::where('is_active', true)
+        $adminEmails = \App\Models\Admin::where('is_active', true)
             ->pluck('email')
             ->toArray();
 

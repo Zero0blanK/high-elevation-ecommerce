@@ -9,8 +9,6 @@ use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class KpiController extends Controller
 {
@@ -241,19 +239,16 @@ class KpiController extends Controller
 
     private function getKpiData($startDate, $endDate)
     {
-        $orders = Order::whereBetween('created_at', [$startDate, $endDate]);
-        $customers = Customer::whereBetween('created_at', [$startDate, $endDate]);
-        
         return [
             'sales' => [
-                'total_revenue' => $orders->where('payment_status', 'paid')->sum('total_amount'),
-                'average_order_value' => $orders->where('payment_status', 'paid')->avg('total_amount') ?? 0,
-                'total_orders' => $orders->count(),
-                'completed_orders' => $orders->where('status', 'completed')->count(),
-                'cancelled_orders' => $orders->where('status', 'cancelled')->count(),
+                'total_revenue' => Order::whereBetween('created_at', [$startDate, $endDate])->where('payment_status', 'paid')->sum('total_amount'),
+                'average_order_value' => Order::whereBetween('created_at', [$startDate, $endDate])->where('payment_status', 'paid')->avg('total_amount') ?? 0,
+                'total_orders' => Order::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'completed_orders' => Order::whereBetween('created_at', [$startDate, $endDate])->where('status', 'completed')->count(),
+                'cancelled_orders' => Order::whereBetween('created_at', [$startDate, $endDate])->where('status', 'cancelled')->count(),
             ],
             'customers' => [
-                'new_customers' => $customers->count(),
+                'new_customers' => Customer::whereBetween('created_at', [$startDate, $endDate])->count(),
                 'total_customers' => Customer::count(),
             ],
             'products' => [
@@ -277,13 +272,9 @@ class KpiController extends Controller
             'products.stock_quantity',
             'products.low_stock_threshold',
             'products.price',
+            'products.cost_price',
             DB::raw('COALESCE(SUM(order_items.quantity), 0) as units_sold'),
             DB::raw('COALESCE(SUM(order_items.total_price), 0) as revenue'),
-            DB::raw('COALESCE(AVG(
-                CASE 
-                    WHEN orders.payment_status = "paid" 
-                    THEN order_items.total_price 
-                END), 0) as avg_price')
         ])
         ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
         ->leftJoin('orders', function($join) use ($startDate, $endDate) {
@@ -295,20 +286,27 @@ class KpiController extends Controller
             'products.name',
             'products.stock_quantity',
             'products.low_stock_threshold',
-            'products.price'
+            'products.price',
+            'products.cost_price'
         ])
         ->orderByDesc('revenue')
         ->take(10)
         ->get()
         ->map(function($product) {
-            $profit_margin = $product->price > 0 
-                ? (($product->avg_price - $product->price) / $product->price) * 100 
+            $sellingPrice = (float) $product->price;
+            $costPrice = (float) ($product->cost_price ?? 0);
+
+            // Profit margin = ((Selling Price - Cost) / Selling Price) * 100
+            $profit_margin = ($sellingPrice > 0 && $costPrice > 0)
+                ? (($sellingPrice - $costPrice) / $sellingPrice) * 100
                 : 0;
                 
             return [
                 'name' => $product->name,
                 'revenue' => $product->revenue,
                 'units_sold' => $product->units_sold,
+                'cost_price' => $costPrice,
+                'selling_price' => $sellingPrice,
                 'profit_margin' => round($profit_margin, 1),
                 'stock_quantity' => $product->stock_quantity,
                 'stock_threshold' => $product->low_stock_threshold ?? 10
@@ -350,115 +348,49 @@ class KpiController extends Controller
         $dateRange = $this->getDateRange($timeframe);
         $kpis = $this->getKpiData($dateRange['start'], $dateRange['end']);
 
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $filename = 'kpi_analytics_' . $timeframe . '_' . now()->format('Y-m-d') . '.csv';
 
-        // Set title and headers
-        $sheet->setCellValue('A1', 'KPI Analytics Report');
-        $sheet->setCellValue('A2', 'Period: ' . ucfirst(str_replace('_', ' ', $timeframe)));
-        $sheet->setCellValue('A3', 'Generated: ' . now()->format('F j, Y \a\t g:i A'));
-        $sheet->setCellValue('A4', 'Date Range: ' . $dateRange['start']->format('M j, Y') . ' - ' . $dateRange['end']->format('M j, Y'));
-
-        // Sales Metrics Section
-        $row = 6;
-        $sheet->setCellValue('A' . $row, 'SALES METRICS');
-        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
-        $row++;
-
-        $salesMetrics = [
-            'Total Revenue' => number_format($kpis['sales']['total_revenue'], 2),
-            'Average Order Value' => number_format($kpis['sales']['average_order_value'], 2),
-            'Total Orders' => number_format($kpis['sales']['total_orders']),
-            'Completed Orders' => number_format($kpis['sales']['completed_orders']),
-            'Cancelled Orders' => number_format($kpis['sales']['cancelled_orders']),
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        foreach ($salesMetrics as $metric => $value) {
-            $sheet->setCellValue('A' . $row, $metric);
-            $sheet->setCellValue('B' . $row, $value);
-            $row++;
-        }
+        return response()->stream(function () use ($kpis, $timeframe, $dateRange) {
+            $handle = fopen('php://output', 'w');
 
-        // Customer Metrics Section
-        $row++;
-        $sheet->setCellValue('A' . $row, 'CUSTOMER METRICS');
-        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
-        $row++;
+            fputcsv($handle, ['KPI Analytics Report']);
+            fputcsv($handle, ['Period', ucfirst(str_replace('_', ' ', $timeframe))]);
+            fputcsv($handle, ['Generated', now()->format('F j, Y g:i A')]);
+            fputcsv($handle, ['Date Range', $dateRange['start']->format('M j, Y') . ' - ' . $dateRange['end']->format('M j, Y')]);
+            fputcsv($handle, []);
 
-        $customerMetrics = [
-            'New Customers' => number_format($kpis['customers']['new_customers']),
-            'Total Customers' => number_format($kpis['customers']['total_customers']),
-        ];
+            fputcsv($handle, ['SALES METRICS']);
+            fputcsv($handle, ['Total Revenue', '$' . number_format($kpis['sales']['total_revenue'], 2)]);
+            fputcsv($handle, ['Average Order Value', '$' . number_format($kpis['sales']['average_order_value'], 2)]);
+            fputcsv($handle, ['Total Orders', $kpis['sales']['total_orders']]);
+            fputcsv($handle, ['Completed Orders', $kpis['sales']['completed_orders']]);
+            fputcsv($handle, ['Cancelled Orders', $kpis['sales']['cancelled_orders']]);
+            fputcsv($handle, []);
 
-        foreach ($customerMetrics as $metric => $value) {
-            $sheet->setCellValue('A' . $row, $metric);
-            $sheet->setCellValue('B' . $row, $value);
-            $row++;
-        }
+            fputcsv($handle, ['CUSTOMER METRICS']);
+            fputcsv($handle, ['New Customers', $kpis['customers']['new_customers']]);
+            fputcsv($handle, ['Total Customers', $kpis['customers']['total_customers']]);
+            fputcsv($handle, []);
 
-        // Product Metrics Section
-        $row++;
-        $sheet->setCellValue('A' . $row, 'PRODUCT METRICS');
-        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
-        $row++;
+            fputcsv($handle, ['PRODUCT METRICS']);
+            fputcsv($handle, ['Total Products', $kpis['products']['total_products']]);
+            fputcsv($handle, ['Low Stock Products', $kpis['products']['low_stock_products']]);
+            fputcsv($handle, ['Out of Stock', $kpis['products']['out_of_stock']]);
+            fputcsv($handle, []);
 
-        $productMetrics = [
-            'Total Products' => number_format($kpis['products']['total_products']),
-            'Low Stock Products' => number_format($kpis['products']['low_stock_products']),
-            'Out of Stock Products' => number_format($kpis['products']['out_of_stock']),
-        ];
+            fputcsv($handle, ['TOP SELLING PRODUCTS']);
+            fputcsv($handle, ['Product Name', 'Units Sold']);
+            foreach ($kpis['products']['top_selling'] as $product) {
+                fputcsv($handle, [$product->name, $product->total_sold ?? 0]);
+            }
 
-        foreach ($productMetrics as $metric => $value) {
-            $sheet->setCellValue('A' . $row, $metric);
-            $sheet->setCellValue('B' . $row, $value);
-            $row++;
-        }
-
-        // Top Selling Products
-        $row++;
-        $sheet->setCellValue('A' . $row, 'TOP SELLING PRODUCTS');
-        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
-        $row++;
-
-        $sheet->setCellValue('A' . $row, 'Product Name');
-        $sheet->setCellValue('B' . $row, 'Units Sold');
-        $sheet->getStyle('A' . $row . ':B' . $row)->getFont()->setBold(true);
-        $row++;
-
-        foreach ($kpis['products']['top_selling'] as $product) {
-            $sheet->setCellValue('A' . $row, $product->name);
-            $sheet->setCellValue('B' . $row, $product->total_sold ?? 0);
-            $row++;
-        }
-
-        // Format the spreadsheet
-        $sheet->getColumnDimension('A')->setWidth(25);
-        $sheet->getColumnDimension('B')->setWidth(20);
-        
-        // Style the header
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-        $sheet->getStyle('A2:A4')->getFont()->setItalic(true);
-
-        // Add borders to data sections
-        $lastRow = $row - 1;
-        $sheet->getStyle('A6:B' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-
-        // Create and download the file
-        $writer = new Xlsx($spreadsheet);
-        $filename = 'kpi_analytics_' . $timeframe . '_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
-        
-        // Set headers for download
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-        header('Cache-Control: max-age=1');
-        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-        header('Cache-Control: cache, must-revalidate');
-        header('Pragma: public');
-
-        $writer->save('php://output');
-        exit;
+            fclose($handle);
+        }, 200, $headers);
     }
 
     /**

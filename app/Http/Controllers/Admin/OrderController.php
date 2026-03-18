@@ -64,14 +64,12 @@ class OrderController extends Controller
 
     public function printShippingLabel(Order $order)
     {
-        if (!$order->canBeShipped()) {
-            return back()->with('error', 'Order cannot be shipped at this time.');
-        }
+        $order->load(['customer', 'addresses']);
 
-        // Implement shipping label generation logic here
-        // This would integrate with shipping providers like FedEx, UPS, etc.
-        
-        return back()->with('success', 'Shipping label generated successfully.');
+        $shippingAddr = $order->addresses->first(fn($a) => ($a->type ?? $a->address_type ?? '') === 'shipping')
+            ?? $order->addresses->first();
+
+        return view('admin.orders.shipping-label', compact('order', 'shippingAddr'));
     }
 
     public function refund(Request $request, Order $order)

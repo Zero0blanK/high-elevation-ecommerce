@@ -2,21 +2,30 @@
 
 namespace App\Services;
 
+use App\Repositories\OrderRepository;
+use App\Repositories\CartRepository;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderAddress;
-use App\Models\ShoppingCart;
 use App\Models\Customer;
 use App\Models\Coupon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class OrderService
 {
-    public function createOrderFromCart(Customer $customer, array $shippingAddress, array $billingAddress = null, $couponCode = null)
+    protected OrderRepository $orderRepository;
+    protected CartRepository $cartRepository;
+
+    public function __construct(OrderRepository $orderRepository, CartRepository $cartRepository)
+    {
+        $this->orderRepository = $orderRepository;
+        $this->cartRepository = $cartRepository;
+    }
+
+    public function createOrderFromCart(Customer $customer, array $shippingAddress, array $billingAddress = null, $couponCode = null): Order
     {
         return DB::transaction(function () use ($customer, $shippingAddress, $billingAddress, $couponCode) {
-            $cartItems = $customer->cartItems()->with('product')->get();
+            $cartItems = $this->cartRepository->getCartWithProducts($customer->id, null);
             
             if ($cartItems->isEmpty()) {
                 throw new \Exception('Cart is empty');
@@ -30,7 +39,11 @@ class OrderService
             }
 
             // Calculate totals
-            $subtotal = $cartItems->sum('total_price');
+            $subtotal = $cartItems->sum(function ($item) {
+                $price = $item->product->is_on_sale ? $item->product->sale_price : $item->product->price;
+                return $price * $item->quantity;
+            });
+            
             $taxAmount = $this->calculateTax($subtotal);
             $shippingAmount = $this->calculateShipping($cartItems, $shippingAddress);
             
@@ -46,7 +59,7 @@ class OrderService
             $totalAmount = $subtotal + $taxAmount + $shippingAmount - $discountAmount;
 
             // Create order
-            $order = Order::create([
+            $order = $this->orderRepository->create([
                 'customer_id' => $customer->id,
                 'status' => 'pending',
                 'subtotal' => $subtotal,
@@ -59,13 +72,17 @@ class OrderService
 
             // Create order items
             foreach ($cartItems as $cartItem) {
-                $order->items()->create([
+                $price = $cartItem->product->is_on_sale 
+                    ? $cartItem->product->sale_price 
+                    : $cartItem->product->price;
+
+                $this->orderRepository->createOrderItem($order->id, [
                     'product_id' => $cartItem->product_id,
                     'product_name' => $cartItem->product->name,
                     'product_sku' => $cartItem->product->sku,
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $cartItem->product->discounted_price,
-                    'total_price' => $cartItem->total_price,
+                    'unit_price' => $price,
+                    'total_price' => $price * $cartItem->quantity,
                     'product_options' => $cartItem->product_options
                 ]);
 
@@ -78,20 +95,16 @@ class OrderService
                 );
             }
 
-            // Create addresses
-            $order->addresses()->create(array_merge($shippingAddress, ['type' => 'shipping']));
-            $order->addresses()->create(array_merge($billingAddress ?: $shippingAddress, ['type' => 'billing']));
-
             // Clear cart
-            $customer->cartItems()->delete();
+            $this->cartRepository->clearCart($customer->id, null);
 
             return $order;
         });
     }
 
-    public function updateOrderStatus(Order $order, string $status, array $data = [])
+    public function updateOrderStatus(Order $order, string $status, array $data = []): Order
     {
-        $order->update(array_merge(['status' => $status], $data));
+        $this->orderRepository->update($order, array_merge(['status' => $status], $data));
 
         // Send notification based on status
         switch ($status) {
@@ -99,11 +112,11 @@ class OrderService
                 Mail::to($order->customer->email)->send(new \App\Mail\OrderProcessing($order));
                 break;
             case 'shipped':
-                $order->update(['shipped_at' => now()]);
+                $this->orderRepository->update($order, ['shipped_at' => now()]);
                 Mail::to($order->customer->email)->send(new \App\Mail\OrderShipped($order));
                 break;
             case 'delivered':
-                $order->update(['delivered_at' => now()]);
+                $this->orderRepository->update($order, ['delivered_at' => now()]);
                 Mail::to($order->customer->email)->send(new \App\Mail\OrderDelivered($order));
                 break;
             case 'cancelled':
@@ -112,59 +125,85 @@ class OrderService
                 break;
         }
 
-        return $order;
+        return $order->fresh();
     }
 
-    public function getOrdersWithFilters(array $filters = [])
+    public function findOrderById(int $id): ?Order
     {
-        $query = Order::with(['customer', 'items.product']);
-
-        if (isset($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (isset($filters['payment_status'])) {
-            $query->where('payment_status', $filters['payment_status']);
-        }
-
-        if (isset($filters['customer_id'])) {
-            $query->where('customer_id', $filters['customer_id']);
-        }
-
-        if (isset($filters['date_from'])) {
-            $query->whereDate('created_at', '>=', $filters['date_from']);
-        }
-
-        if (isset($filters['date_to'])) {
-            $query->whereDate('created_at', '<=', $filters['date_to']);
-        }
-
-        if (isset($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                      $customerQuery->where('first_name', 'like', "%{$search}%")
-                                  ->orWhere('last_name', 'like', "%{$search}%")
-                                  ->orWhere('email', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        return $query->orderBy('created_at', 'desc')->paginate(20);
+        return $this->orderRepository->findById($id);
     }
 
-    private function calculateTax($subtotal)
+    public function findOrderByNumber(string $orderNumber): ?Order
+    {
+        return $this->orderRepository->findByOrderNumber($orderNumber);
+    }
+
+    public function findOrderByCustomer(int $orderId, int $customerId): ?Order
+    {
+        return $this->orderRepository->findByCustomer($orderId, $customerId);
+    }
+
+    public function findOrderByNumberAndCustomer(string $orderNumber, int $customerId): ?Order
+    {
+        return $this->orderRepository->findByOrderNumberAndCustomer($orderNumber, $customerId);
+    }
+
+    public function getOrderWithRelations(int $id, array $relations = []): ?Order
+    {
+        return $this->orderRepository->findWithRelations($id, $relations);
+    }
+
+    public function getOrdersByCustomer(int $customerId, int $perPage = 10, array $filters = []): LengthAwarePaginator
+    {
+        return $this->orderRepository->getOrdersByCustomerPaginated($customerId, $perPage, $filters);
+    }
+
+    public function getOrdersWithFilters(array $filters = []): LengthAwarePaginator
+    {
+        return $this->orderRepository->getOrdersWithFilters($filters);
+    }
+
+    public function getOrderCountsByStatus(int $customerId): array
+    {
+        return $this->orderRepository->getOrderCountsByStatus($customerId);
+    }
+
+    public function cancelOrder(Order $order): Order
+    {
+        if (!$order->canBeCancelled()) {
+            throw new \Exception('This order cannot be cancelled.');
+        }
+
+        return $this->updateOrderStatus($order, 'cancelled');
+    }
+
+    public function confirmDelivery(Order $order): Order
+    {
+        if ($order->status !== 'shipped') {
+            throw new \Exception('Order must be shipped before confirming delivery.');
+        }
+
+        return $this->updateOrderStatus($order, 'delivered');
+    }
+
+    public function createPayment(Order $order, array $paymentData): \App\Models\Payment
+    {
+        return $this->orderRepository->createPayment(array_merge($paymentData, [
+            'order_id' => $order->id
+        ]));
+    }
+
+    private function calculateTax(float $subtotal): float
     {
         // Implement tax calculation logic based on location
         return $subtotal * 0.08; // 8% tax rate example
     }
 
-    private function calculateShipping($cartItems, $shippingAddress)
+    private function calculateShipping($cartItems, array $shippingAddress): float
     {
         // Implement shipping calculation logic
         $totalWeight = $cartItems->sum(function ($item) {
-            return $item->product->weight * $item->quantity;
+            return ($item->product->weight ?? 0) * $item->quantity;
         });
 
         // Simple weight-based shipping
@@ -173,7 +212,7 @@ class OrderService
         return 14.99;
     }
 
-    private function restoreInventoryFromOrder(Order $order)
+    private function restoreInventoryFromOrder(Order $order): void
     {
         foreach ($order->items as $item) {
             app(InventoryService::class)->adjustStock(

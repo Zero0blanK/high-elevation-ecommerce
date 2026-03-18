@@ -13,7 +13,6 @@ class CouponController extends Controller
     {
         $query = Coupon::query();
 
-        // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -22,12 +21,10 @@ class CouponController extends Controller
             });
         }
 
-        // Filter by status
         if ($request->filled('status')) {
             $query->where('is_active', $request->status === 'active');
         }
 
-        // Filter by type
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
@@ -47,7 +44,7 @@ class CouponController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:coupons,code',
             'description' => 'nullable|string|max:255',
-            'type' => 'required|in:fixed,percentage',
+            'type' => 'required|in:fixed_amount,percentage',
             'value' => 'required|numeric|min:0',
             'minimum_amount' => 'nullable|numeric|min:0',
             'maximum_discount' => 'nullable|numeric|min:0',
@@ -86,7 +83,7 @@ class CouponController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:coupons,code,' . $coupon->id,
             'description' => 'nullable|string|max:255',
-            'type' => 'required|in:fixed,percentage',
+            'type' => 'required|in:fixed_amount,percentage',
             'value' => 'required|numeric|min:0',
             'minimum_amount' => 'nullable|numeric|min:0',
             'maximum_discount' => 'nullable|numeric|min:0',
@@ -108,7 +105,6 @@ class CouponController extends Controller
 
     public function destroy(Coupon $coupon)
     {
-        // Check if coupon has been used
         if ($coupon->orders()->exists()) {
             return redirect()->route('admin.coupons.index')
                 ->with('error', 'Cannot delete coupon that has been used in orders.');
@@ -142,7 +138,6 @@ class CouponController extends Controller
                 break;
 
             case 'delete':
-                // Check if any coupon has been used
                 $usedCoupons = $coupons->whereHas('orders')->count();
                 if ($usedCoupons > 0) {
                     return redirect()->route('admin.coupons.index')

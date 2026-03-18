@@ -2,17 +2,27 @@
 
 namespace App\Services;
 
+use App\Repositories\CustomerRepository;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CustomerPreference;
+use App\Models\Product;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class CustomerService
 {
+    protected CustomerRepository $customerRepository;
+
+    public function __construct(CustomerRepository $customerRepository)
+    {
+        $this->customerRepository = $customerRepository;
+    }
+
     public function createCustomer(array $data): Customer
     {
-        $customer = Customer::create([
+        $customer = $this->customerRepository->create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'email' => $data['email'],
@@ -22,7 +32,7 @@ class CustomerService
         ]);
 
         // Create default preferences
-        $customer->preferences()->create([
+        $this->customerRepository->createPreferences($customer->id, [
             'marketing_emails' => $data['marketing_emails'] ?? true,
             'order_notifications' => true,
         ]);
@@ -35,12 +45,12 @@ class CustomerService
 
     public function updateCustomerProfile(Customer $customer, array $data): Customer
     {
-        $customer->update($data);
+        $this->customerRepository->update($customer, $data);
 
         // Update preferences if provided
         if (isset($data['preferences'])) {
-            $customer->preferences()->updateOrCreate(
-                ['customer_id' => $customer->id],
+            $this->customerRepository->updateOrCreatePreferences(
+                $customer->id,
                 $data['preferences']
             );
         }
@@ -52,55 +62,79 @@ class CustomerService
     {
         if ($setAsDefault) {
             // Remove default flag from other addresses of same type
-            $customer->addresses()
-                ->where('type', $addressData['type'])
-                ->update(['is_default' => false]);
+            $this->customerRepository->clearDefaultAddresses($customer->id, $addressData['type']);
         }
 
-        return $customer->addresses()->create(array_merge($addressData, [
-            'is_default' => $setAsDefault
-        ]));
+        return $this->customerRepository->createAddress(
+            $customer->id,
+            array_merge($addressData, ['is_default' => $setAsDefault])
+        );
     }
 
-    public function getCustomerAnalytics(Customer $customer)
+    public function updateCustomerAddress(CustomerAddress $address, array $data): CustomerAddress
     {
-        return [
-            'total_orders' => $customer->orders()->count(),
-            'total_spent' => $customer->orders()->where('payment_status', 'paid')->sum('total_amount'),
-            'average_order_value' => $customer->orders()->where('payment_status', 'paid')->avg('total_amount'),
+        if (!empty($data['is_default']) && $data['is_default']) {
+            $this->customerRepository->clearDefaultAddresses($address->customer_id, $address->type);
+        }
+
+        $this->customerRepository->updateAddress($address, $data);
+
+        return $address->fresh();
+    }
+
+    public function deleteCustomerAddress(CustomerAddress $address): bool
+    {
+        return $this->customerRepository->deleteAddress($address);
+    }
+
+    public function getCustomerAddresses(int $customerId): \Illuminate\Support\Collection
+    {
+        return $this->customerRepository->getAddresses($customerId);
+    }
+
+    public function getCustomerAddressesByType(int $customerId, string $type): \Illuminate\Support\Collection
+    {
+        return $this->customerRepository->getAddressesByType($customerId, $type);
+    }
+
+    public function getCustomerAnalytics(Customer $customer): array
+    {
+        $stats = $this->customerRepository->getOrderStatistics($customer);
+
+        return array_merge($stats, [
             'favorite_products' => $this->getFavoriteProducts($customer),
-            'last_order_date' => $customer->orders()->latest()->first()?->created_at,
             'customer_lifetime_value' => $this->calculateCustomerLifetimeValue($customer),
-        ];
+        ]);
     }
 
-    public function getCustomersWithFilters(array $filters = [])
+    public function getCustomersWithFilters(array $filters = []): LengthAwarePaginator
     {
-        $query = Customer::with(['preferences']);
-
-        if (isset($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        if (isset($filters['is_active'])) {
-            $query->where('is_active', $filters['is_active']);
-        }
-
-        if (isset($filters['has_orders'])) {
-            $query->has('orders');
-        }
-
-        return $query->orderBy('created_at', 'desc')->paginate(20);
+        return $this->customerRepository->getCustomersWithFilters($filters);
     }
 
-    private function getFavoriteProducts(Customer $customer, $limit = 5)
+    public function findCustomerById(int $id): ?Customer
     {
-        return \App\Models\Product::select('products.*')
+        return $this->customerRepository->findById($id);
+    }
+
+    public function findCustomerByEmail(string $email): ?Customer
+    {
+        return $this->customerRepository->findByEmail($email);
+    }
+
+    public function getCustomerPreferences(int $customerId): ?CustomerPreference
+    {
+        return $this->customerRepository->getPreferences($customerId);
+    }
+
+    public function updateCustomerPreferences(int $customerId, array $data): CustomerPreference
+    {
+        return $this->customerRepository->updateOrCreatePreferences($customerId, $data);
+    }
+
+    private function getFavoriteProducts(Customer $customer, int $limit = 5)
+    {
+        return Product::select('products.*')
             ->join('order_items', 'products.id', '=', 'order_items.product_id')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->where('orders.customer_id', $customer->id)
@@ -111,17 +145,19 @@ class CustomerService
             ->get();
     }
 
-    private function calculateCustomerLifetimeValue(Customer $customer)
+    private function calculateCustomerLifetimeValue(Customer $customer): float
     {
-        $totalSpent = $customer->orders()->where('payment_status', 'paid')->sum('total_amount');
+        $stats = $this->customerRepository->getOrderStatistics($customer);
+        $totalSpent = $stats['total_spent'] ?? 0;
+        $averageOrderValue = $stats['average_order_value'] ?? 0;
+        
         $daysSinceFirstOrder = $customer->orders()->oldest()->first()?->created_at?->diffInDays(now()) ?: 1;
-        $averageOrderValue = $customer->orders()->where('payment_status', 'paid')->avg('total_amount') ?: 0;
         
         // Simple CLV calculation: (Average Order Value × Order Frequency × Gross Margin × Lifespan)
-        $orderFrequency = $customer->orders()->count() / max($daysSinceFirstOrder / 365, 0.1);
+        $orderFrequency = $stats['total_orders'] / max($daysSinceFirstOrder / 365, 0.1);
         $grossMargin = 0.3; // 30% margin assumption
         $estimatedLifespan = 3; // 3 years assumption
         
-        return $averageOrderValue * $orderFrequency * $grossMargin * $estimatedLifespan;
+        return (float) ($averageOrderValue * $orderFrequency * $grossMargin * $estimatedLifespan);
     }
 }

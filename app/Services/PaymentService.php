@@ -211,7 +211,7 @@ class PaymentService
         Log::warning('Charge dispute created', ['dispute_id' => $dispute['id']]);
         
         // Notify administrators
-        $adminEmails = \App\Models\AdminUser::where('is_active', true)->pluck('email');
+        $adminEmails = \App\Models\Admin::where('is_active', true)->pluck('email');
         if ($adminEmails->isNotEmpty()) {
             \Mail::to($adminEmails)->send(new \App\Mail\ChargeDispute($dispute));
         }

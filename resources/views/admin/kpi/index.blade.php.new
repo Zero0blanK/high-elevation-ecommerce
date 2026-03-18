@@ -1,0 +1,363 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Dashboard')
+
+@section('content')
+<div class="space-y-6">
+
+    {{-- Row 1: Timeframe Selector + Export --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p class="mt-1 text-sm text-gray-500">Overview of your store performance</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            @php
+                $timeframes = [
+                    'today' => 'Today',
+                    'yesterday' => 'Yesterday',
+                    'this_week' => 'This Week',
+                    'last_month' => 'Last Month',
+                    'this_year' => 'This Year',
+                ];
+            @endphp
+            @foreach($timeframes as $key => $label)
+                <a href="{{ route('admin.kpi.index', ['timeframe' => $key]) }}"
+                   class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
+                          {{ $timeframe === $key
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
+            <a href="{{ route('admin.kpi.export', ['timeframe' => $timeframe]) }}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Export CSV
+            </a>
+        </div>
+    </div>
+
+    {{-- Row 2: KPI Metric Cards --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {{-- Total Revenue --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center gap-4">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100">
+                    <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">₱{{ number_format($kpis['sales']['total_revenue'], 2) }}</p>
+                    <p class="text-sm text-gray-500">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Total Orders --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center gap-4">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                    <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ number_format($kpis['sales']['total_orders']) }}</p>
+                    <p class="text-sm text-gray-500">Total Orders</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- New Customers --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center gap-4">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                    <svg class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ number_format($kpis['customers']['new_customers']) }}</p>
+                    <p class="text-sm text-gray-500">New Customers</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Avg Order Value --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center gap-4">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">₱{{ number_format($kpis['sales']['average_order_value'], 2) }}</p>
+                    <p class="text-sm text-gray-500">Avg Order Value</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Row 3: Charts --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {{-- Sales Trend --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5"
+             x-data="salesChart()" x-init="loadChart('7days')">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-gray-900">Sales Trend</h2>
+                <div class="flex gap-1">
+                    <template x-for="p in periods" :key="p.value">
+                        <button @click="loadChart(p.value)"
+                                :class="period === p.value
+                                    ? 'bg-amber-600 text-white'
+                                    : 'text-gray-600 hover:bg-gray-100'"
+                                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors"
+                                x-text="p.label"></button>
+                    </template>
+                </div>
+            </div>
+            <div class="relative h-64">
+                <canvas x-ref="salesCanvas"></canvas>
+            </div>
+        </div>
+
+        {{-- Order Status Distribution --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5"
+             x-data="orderStatusChart()" x-init="loadChart()">
+            <h2 class="text-base font-semibold text-gray-900 mb-4">Order Status Distribution</h2>
+            <div class="relative h-64 flex items-center justify-center">
+                <canvas x-ref="statusCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {{-- Row 4: Top Selling + Quick Stats --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {{-- Top Selling Products --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-5 py-4 border-b border-gray-200">
+                <h2 class="text-base font-semibold text-gray-900">Top Selling Products</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Units Sold</th>
+                            <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($kpis['products']['top_selling'] as $product)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-5 py-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ $product->name }}</p>
+                                    <p class="text-xs text-gray-500">{{ $product->sku }}</p>
+                                </td>
+                                <td class="px-5 py-3 text-right text-sm text-gray-900">{{ number_format($product->total_sold) }}</td>
+                                <td class="px-5 py-3 text-right text-sm text-gray-900">{{ number_format($product->stock_quantity) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-5 py-8 text-center text-sm text-gray-500">No sales data available</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- Quick Stats --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-5 py-4 border-b border-gray-200">
+                <h2 class="text-base font-semibold text-gray-900">Quick Stats</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                <a href="{{ route('admin.inventory.index', ['stock_filter' => 'low_stock']) }}" class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
+                            <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </span>
+                        <span class="text-sm text-gray-700">Low Stock Products</span>
+                    </div>
+                    <span class="text-sm font-semibold text-amber-600">{{ $kpis['products']['low_stock_products'] }}</span>
+                </a>
+                <a href="{{ route('admin.inventory.index', ['stock_filter' => 'out_of_stock']) }}" class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
+                            <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                        </span>
+                        <span class="text-sm text-gray-700">Out of Stock</span>
+                    </div>
+                    <span class="text-sm font-semibold text-red-600">{{ $kpis['products']['out_of_stock'] }}</span>
+                </a>
+                <a href="{{ route('admin.customers.index') }}" class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                            <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                            </svg>
+                        </span>
+                        <span class="text-sm text-gray-700">Total Customers</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-900">{{ number_format($kpis['customers']['total_customers']) }}</span>
+                </a>
+                <div class="flex items-center justify-between px-5 py-4">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                            <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                            </svg>
+                        </span>
+                        <span class="text-sm text-gray-700">Total Inventory Value</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-900">₱{{ number_format($kpis['inventory']['total_inventory_value'], 2) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Row 5: Product Performance Table --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-5 py-4 border-b border-gray-200">
+            <h2 class="text-base font-semibold text-gray-900">Product Performance</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                        <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Units Sold</th>
+                        <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Profit Margin</th>
+                        <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Level</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($kpis['products']['performance'] as $product)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-5 py-3 text-sm font-medium text-gray-900">{{ $product->name }}</td>
+                            <td class="px-5 py-3 text-right text-sm text-gray-900">₱{{ number_format($product->revenue, 2) }}</td>
+                            <td class="px-5 py-3 text-right text-sm text-gray-900">{{ number_format($product->units_sold) }}</td>
+                            <td class="px-5 py-3 text-right text-sm">
+                                <span class="{{ $product->profit_margin >= 30 ? 'text-green-600' : ($product->profit_margin >= 15 ? 'text-amber-600' : 'text-red-600') }}">
+                                    {{ number_format($product->profit_margin, 1) }}%
+                                </span>
+                            </td>
+                            <td class="px-5 py-3 text-right">
+                                @php
+                                    $threshold = $product->stock_threshold ?? 10;
+                                    $stockClass = $product->stock_quantity <= 0
+                                        ? 'bg-red-100 text-red-700'
+                                        : ($product->stock_quantity <= $threshold
+                                            ? 'bg-amber-100 text-amber-700'
+                                            : 'bg-green-100 text-green-700');
+                                @endphp
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $stockClass }}">
+                                    {{ number_format($product->stock_quantity) }}
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-5 py-8 text-center text-sm text-gray-500">No performance data available</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+@endsection
+
+@push('scripts')
+<script>
+    const chartDataUrl = "{{ route('admin.kpi.chart-data') }}";
+    const defaultHeaders = { 'X-Requested-With': 'XMLHttpRequest' };
+
+    function salesChart() {
+        return {
+            period: '7days',
+            chart: null,
+            periods: [
+                { value: '7days', label: '7 Days' },
+                { value: '30days', label: '30 Days' },
+                { value: '90days', label: '90 Days' },
+            ],
+            loadChart(period) {
+                this.period = period;
+                fetch(chartDataUrl + '?type=sales&period=' + period, { headers: defaultHeaders })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (this.chart) this.chart.destroy();
+                        this.chart = new Chart(this.$refs.salesCanvas, {
+                            type: 'line',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    ...data.datasets,
+                                    fill: true,
+                                    tension: 0.3,
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                                    x: { grid: { display: false } }
+                                }
+                            }
+                        });
+                    });
+            }
+        };
+    }
+
+    function orderStatusChart() {
+        return {
+            chart: null,
+            loadChart() {
+                fetch(chartDataUrl + '?type=order-status&period=30days', { headers: defaultHeaders })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (this.chart) this.chart.destroy();
+                        this.chart = new Chart(this.$refs.statusCanvas, {
+                            type: 'doughnut',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    data: data.datasets.data,
+                                    backgroundColor: data.datasets.backgroundColor,
+                                    borderColor: data.datasets.borderColor,
+                                    borderWidth: 2,
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' }
+                                    }
+                                }
+                            }
+                        });
+                    });
+            }
+        };
+    }
+</script>
+@endpush

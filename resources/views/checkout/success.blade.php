@@ -43,7 +43,7 @@
                         @if($order->items && $order->items->count() > 0)
                             @foreach($order->items as $item)
                             <div class="flex items-center space-x-4">
-                                <img src="{{ $item->product->image ?? '/images/placeholder.jpg' }}" alt="{{ $item->product->name ?? 'Product' }}" 
+                                <img src="{{ $item->product->primaryImage?->image_url ?? '/images/placeholder-coffee.jpg' }}" alt="{{ $item->product->name ?? 'Product' }}" 
                                      class="w-16 h-16 object-cover rounded-lg">
                                 <div class="flex-1">
                                     <h4 class="font-medium text-gray-900">{{ $item->product->name ?? 'Product Name' }}</h4>

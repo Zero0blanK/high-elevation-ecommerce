@@ -71,6 +71,27 @@ class Customer extends Authenticatable
         return $this->hasMany(ShoppingCart::class);
     }
 
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function wishlistProducts()
+    {
+        return $this->belongsToMany(Product::class, 'wishlists')->withTimestamps();
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function couponUsages()
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_customer')
+            ->withPivot('order_id', 'used_at');
+    }
+
     public function getFullNameAttribute()
     {
         return $this->first_name . ' ' . $this->last_name;

@@ -2,13 +2,22 @@
 
 namespace App\Services;
 
-use App\Models\ShoppingCart;
+use App\Repositories\CartRepository;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Coupon;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
 class CartService
 {
+    protected CartRepository $cartRepository;
+
+    public function __construct(CartRepository $cartRepository)
+    {
+        $this->cartRepository = $cartRepository;
+    }
+
     public function addToCart($productId, $quantity = 1, $options = [], $customerId = null, $sessionId = null)
     {
         $product = Product::findOrFail($productId);
@@ -24,27 +33,23 @@ class CartService
         $sessionId = $sessionId ?: Session::getId();
         
         // Check if item already exists in cart
-        $cartItem = ShoppingCart::where('product_id', $productId)
-            ->where(function ($query) use ($customerId, $sessionId) {
-                if ($customerId) {
-                    $query->where('customer_id', $customerId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->where('product_options', json_encode($options))
-            ->first();
+        $cartItem = $this->cartRepository->findExistingCartItem(
+            $productId,
+            $customerId,
+            $sessionId,
+            $options
+        );
 
         if ($cartItem) {
             $newQuantity = $cartItem->quantity + $quantity;
             if ($product->stock_quantity < $newQuantity) {
                 throw new \Exception('Cannot add more items. Insufficient stock available');
             }
-            $cartItem->update(['quantity' => $newQuantity]);
-            return $cartItem;
+            $this->cartRepository->update($cartItem, ['quantity' => $newQuantity]);
+            return $cartItem->fresh();
         }
 
-        return ShoppingCart::create([
+        return $this->cartRepository->create([
             'session_id' => $sessionId,
             'customer_id' => $customerId,
             'product_id' => $productId,
@@ -62,32 +67,23 @@ class CartService
         }
 
         if ($cartItem->product->stock_quantity < $quantity) {
-            return back()->with('error', 'Not enough stock available');
+            throw new \Exception('Not enough stock available');
         }
 
-        $cartItem->update(['quantity' => $quantity]);
-        return $cartItem;
+        $this->cartRepository->update($cartItem, ['quantity' => $quantity]);
+        return $cartItem->fresh();
     }
 
     public function removeFromCart($cartItemId, $customerId = null, $sessionId = null)
     {
         $cartItem = $this->getCartItem($cartItemId, $customerId, $sessionId);
-        return $cartItem->delete();
+        return $this->cartRepository->delete($cartItem);
     }
 
     public function getCart($customerId = null, $sessionId = null)
     {
         $sessionId = $sessionId ?: Session::getId();
-        
-        $query = ShoppingCart::with(['product.primaryImage', 'product.category']);
-        
-        if ($customerId) {
-            $query->where('customer_id', $customerId);
-        } else {
-            $query->where('session_id', $sessionId);
-        }
-
-        return $query->get();
+        return $this->cartRepository->getCartWithProducts($customerId, $sessionId);
     }
 
     public function getCartTotals($customerId = null, $sessionId = null)
@@ -99,7 +95,6 @@ class CartService
         $totalWeight = 0;
 
         foreach ($cartItems as $item) {
-            // Calculate price (sale price if on sale, otherwise regular price)
             $price = $item->product->is_on_sale ? $item->product->sale_price : $item->product->price;
             $itemTotal = $price * $item->quantity;
             
@@ -107,7 +102,6 @@ class CartService
             $totalItems += $item->quantity;
             $totalWeight += ($item->product->weight ?? 0) * $item->quantity;
             
-            // Add the calculated total to the item for display
             $item->total_price = $itemTotal;
         }
 
@@ -122,58 +116,43 @@ class CartService
     public function clearCart($customerId = null, $sessionId = null)
     {
         $sessionId = $sessionId ?: Session::getId();
-        
-        $query = ShoppingCart::query();
-        
-        if ($customerId) {
-            $query->where('customer_id', $customerId);
-        } else {
-            $query->where('session_id', $sessionId);
-        }
-
-        return $query->delete();
+        return $this->cartRepository->clearCart($customerId, $sessionId);
     }
 
     public function mergeSessionCartToCustomer(Customer $customer, $sessionId = null)
     {
         $sessionId = $sessionId ?: Session::getId();
         
-        // Get all guest cart items for this session
-        $sessionCartItems = ShoppingCart::forGuest($sessionId)->with('product')->get();
+        $sessionCartItems = $this->cartRepository->getGuestCartItems($sessionId);
         
         foreach ($sessionCartItems as $sessionItem) {
             try {
-                // Check if customer already has this product with same options
-                $existingItem = ShoppingCart::forCustomer($customer->id)
-                    ->where('product_id', $sessionItem->product_id)
-                    ->where('product_options', $sessionItem->product_options)
-                    ->first();
+                $existingItem = $this->cartRepository->findCustomerCartItem(
+                    $customer->id,
+                    $sessionItem->product_id,
+                    $sessionItem->product_options
+                );
 
                 if ($existingItem) {
-                    // Calculate new quantity
                     $newQuantity = $existingItem->quantity + $sessionItem->quantity;
                     
-                    // Check stock availability
                     if ($sessionItem->product->stock_quantity >= $newQuantity) {
-                        $existingItem->update(['quantity' => $newQuantity]);
+                        $this->cartRepository->update($existingItem, ['quantity' => $newQuantity]);
                     } else {
-                        // Set to maximum available stock if over
-                        $existingItem->update([
+                        $this->cartRepository->update($existingItem, [
                             'quantity' => min($newQuantity, $sessionItem->product->stock_quantity)
                         ]);
                     }
                     
-                    // Remove the session item
-                    $sessionItem->delete();
+                    $this->cartRepository->delete($sessionItem);
                 } else {
-                    // Just transfer ownership of the cart item to the customer
-                    $sessionItem->update([
+                    $this->cartRepository->update($sessionItem, [
                         'customer_id' => $customer->id,
                         'session_id' => null
                     ]);
                 }
             } catch (\Exception $e) {
-                \Log::error('Error merging cart item: ' . $e->getMessage(), [
+                Log::error('Error merging cart item: ' . $e->getMessage(), [
                     'session_item_id' => $sessionItem->id,
                     'customer_id' => $customer->id
                 ]);
@@ -186,7 +165,7 @@ class CartService
 
     public function applyCoupon($couponCode, $customerId = null, $sessionId = null)
     {
-        $coupon = \App\Models\Coupon::where('code', $couponCode)->first();
+        $coupon = Coupon::where('code', $couponCode)->first();
         
         if (!$coupon) {
             throw new \Exception('Invalid coupon code');
@@ -207,59 +186,33 @@ class CartService
         ];
     }
 
-    private function getCartItem($cartItemId, $customerId = null, $sessionId = null)
-    {
-        $sessionId = $sessionId ?: Session::getId();
-        
-        $query = ShoppingCart::where('id', $cartItemId);
-        
-        if ($customerId) {
-            $query->where('customer_id', $customerId);
-        } else {
-            $query->where('session_id', $sessionId);
-        }
-
-        $cartItem = $query->first();
-        
-        if (!$cartItem) {
-            throw new \Exception('Cart item not found');
-        }
-
-        return $cartItem;
-    }
-    
     public function transferGuestCart($customerId, $sessionId = null)
     {
         $sessionId = $sessionId ?: Session::getId();
         
-        // Get guest cart items
-        $guestCartItems = ShoppingCart::where('session_id', $sessionId)
-            ->whereNull('customer_id')
-            ->get();
+        $guestCartItems = $this->cartRepository->getGuestCartItems($sessionId);
 
         foreach ($guestCartItems as $guestItem) {
-            // Check if customer already has this product in cart
-            $existingItem = ShoppingCart::where('customer_id', $customerId)
-                ->where('product_id', $guestItem->product_id)
-                ->where('product_options', $guestItem->product_options)
-                ->first();
+            $existingItem = $this->cartRepository->findCustomerCartItem(
+                $customerId,
+                $guestItem->product_id,
+                $guestItem->product_options
+            );
 
             if ($existingItem) {
-                // Merge quantities
                 $newQuantity = $existingItem->quantity + $guestItem->quantity;
                 
-                // Check stock availability
                 if ($guestItem->product->stock_quantity >= $newQuantity) {
-                    $existingItem->update(['quantity' => $newQuantity]);
+                    $this->cartRepository->update($existingItem, ['quantity' => $newQuantity]);
                 } else {
-                    // If not enough stock, just keep the existing quantity
-                    $existingItem->update(['quantity' => min($newQuantity, $guestItem->product->stock_quantity)]);
+                    $this->cartRepository->update($existingItem, [
+                        'quantity' => min($newQuantity, $guestItem->product->stock_quantity)
+                    ]);
                 }
                 
-                $guestItem->delete();
+                $this->cartRepository->delete($guestItem);
             } else {
-                // Transfer to customer
-                $guestItem->update([
+                $this->cartRepository->update($guestItem, [
                     'customer_id' => $customerId,
                     'session_id' => null
                 ]);
@@ -277,8 +230,8 @@ class CartService
             throw new \Exception('Cannot add more items. Stock limit reached.');
         }
         
-        $cartItem->increment('quantity');
-        return $cartItem;
+        $this->cartRepository->incrementQuantity($cartItem);
+        return $cartItem->fresh();
     }
 
     public function decreaseQuantity($cartItemId, $customerId = null, $sessionId = null)
@@ -286,11 +239,23 @@ class CartService
         $cartItem = $this->getCartItem($cartItemId, $customerId, $sessionId);
         
         if ($cartItem->quantity <= 1) {
-            // If quantity is 1 or less, remove the item completely
             return $this->removeFromCart($cartItemId, $customerId, $sessionId);
         }
         
-        $cartItem->decrement('quantity');
+        $this->cartRepository->decrementQuantity($cartItem);
+        return $cartItem->fresh();
+    }
+
+    private function getCartItem($cartItemId, $customerId = null, $sessionId = null)
+    {
+        $sessionId = $sessionId ?: Session::getId();
+        
+        $cartItem = $this->cartRepository->findCartItem($cartItemId, $customerId, $sessionId);
+        
+        if (!$cartItem) {
+            throw new \Exception('Cart item not found');
+        }
+
         return $cartItem;
     }
 }

@@ -36,17 +36,33 @@ class CartController extends Controller
 
         try {
             $customerId = Auth::guard('customer')->id();
-            $options = $request->get('product_options', []);
+            $options = $request->input('product_options', []);
             
             $this->cartService->addToCart(
-                $request->product_id,
-                $request->quantity,
+                $request->input('product_id'),
+                $request->input('quantity'),
                 $options,
                 $customerId
             );
 
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson() || $request->ajax()) {
+                $cartTotals = $this->cartService->getCartTotals($customerId);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product added to cart successfully!',
+                    'cart_count' => $cartTotals['total_items']
+                ]);
+            }
+
             return back()->with('success', 'Product added to cart successfully!');
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 400);
+            }
             return back()->with('error', $e->getMessage());
         }
     }
@@ -59,11 +75,10 @@ class CartController extends Controller
 
         try {
             $customerId = Auth::guard('customer')->id();
-            $quantity = (int) $request->input('quantity', 1);
             
             $this->cartService->updateCartItem(
                 $id,
-                $request->quantity,
+                (int) $request->input('quantity'),
                 $customerId
             );
 

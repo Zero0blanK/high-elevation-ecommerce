@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class LowStockAlert extends Mailable implements ShouldQueue
+class LowStockAlert extends Mailable
 {
     use Queueable, SerializesModels;
 

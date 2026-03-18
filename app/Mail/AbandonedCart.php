@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 
-class AbandonedCart extends Mailable implements ShouldQueue
+class AbandonedCart extends Mailable
 {
     use Queueable, SerializesModels;
 

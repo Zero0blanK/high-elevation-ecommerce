@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 
-class ProductRecommendations extends Mailable implements ShouldQueue
+class ProductRecommendations extends Mailable
 {
     use Queueable, SerializesModels;
 

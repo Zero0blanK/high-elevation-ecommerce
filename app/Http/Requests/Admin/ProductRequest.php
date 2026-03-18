@@ -8,7 +8,7 @@ class ProductRequest extends FormRequest
 {
     public function authorize()
     {
-        return auth('admin')->check() && auth('admin')->user()->canManageProducts();
+        return auth('admin')->check();
     }
 
     public function rules()
@@ -22,8 +22,9 @@ class ProductRequest extends FormRequest
             'sku' => 'required|string|max:100|unique:products,sku,' . $productId,
             'price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0|lt:price',
+            'cost_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
-            'stock_quantity' => 'required|integer|min:0',
+            'stock_quantity' => 'nullable|integer|min:0',
             'low_stock_threshold' => 'required|integer|min:0',
             'weight' => 'required|numeric|min:0',
             'roast_level' => 'required|in:light,medium,dark,extra_dark',

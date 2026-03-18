@@ -23,14 +23,17 @@ use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\KpiController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\ReviewController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Product Routes
 Route::prefix('products')->name('products.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
-    Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
     Route::get('/category/{category:slug}', [ProductController::class, 'category'])->name('category');
+    Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
 });
 
 // Cart Routes
@@ -61,23 +64,27 @@ Route::prefix('customer')->name('customer.')->group(function () {
 });
 
 // Protected Customer Routes
-Route::middleware(['auth:customer'])->group(function () {
+Route::middleware(['customer.auth'])->group(function () {
     // Checkout Routes
     Route::prefix('checkout')->name('checkout.')->group(function () {
         Route::get('/', [CheckoutController::class, 'index'])->name('index');
         Route::post('/process', [CheckoutController::class, 'process'])->name('process');
         Route::get('/success/{orderNumber}', [CheckoutController::class, 'success'])->name('success');
         Route::post('/buy-now', [CheckoutController::class, 'buyNow'])->name('buyNow');
+        Route::get('/gcash/success/{orderNumber}', [CheckoutController::class, 'gcashSuccess'])->name('gcash.success');
+        Route::get('/gcash/failed/{orderNumber}', [CheckoutController::class, 'gcashFailed'])->name('gcash.failed');
     });
 
     // Order routes
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/track', [OrderController::class, 'showTrackingForm'])->name('track.form');
+        Route::get('/track/{orderNumber}', [OrderController::class, 'trackByOrderNumber'])->name('track');
+        Route::post('/track', [OrderController::class, 'trackByNumber'])->name('track.submit');
+        Route::post('/track-package', [OrderController::class, 'trackPackage'])->name('track-package');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
         Route::patch('/{order}/cancel', [OrderController::class, 'cancelOrder'])->name('cancel');
         Route::patch('/{order}/confirm-received', [OrderController::class, 'confirmReceived'])->name('confirm-received');
-        Route::post('/track-order', [OrderController::class, 'showTrackingForm'])->name('track.form');
-        Route::post('/track-package', [OrderController::class, 'trackPackage'])->name('track-package');
     });
 
     // Customer Account Routes
@@ -94,6 +101,18 @@ Route::middleware(['auth:customer'])->group(function () {
         Route::patch('/preferences', [ProfileController::class, 'updatePreferences'])->name('preferences.update');
         Route::get('/addresses/get', [ProfileController::class, 'getUserAddress'])->name('addresses.show');
     });
+
+    // Wishlist Routes
+    Route::prefix('wishlist')->name('wishlist.')->group(function () {
+        Route::get('/', [WishlistController::class, 'index'])->name('index');
+        Route::post('/toggle', [WishlistController::class, 'toggle'])->name('toggle');
+        Route::delete('/{product}', [WishlistController::class, 'remove'])->name('remove');
+    });
+
+    // Review Routes
+    Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::patch('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 // Contact Routes
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
@@ -113,7 +132,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 
     // Protected Admin Routes
-    Route::middleware(['auth:admin'])->group(function () {
+    Route::middleware(['admin.auth'])->group(function () {
         // Dashboard
         Route::get('/', [KpiController::class, 'index'])->name('dashboard');
         Route::get('/dashboard', [KpiController::class, 'index']);
@@ -165,9 +184,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/', [AdminInventoryController::class, 'index'])->name('index');
+            Route::get('/stock-in', [AdminInventoryController::class, 'stockInForm'])->name('stock-in');
+            Route::post('/stock-in', [AdminInventoryController::class, 'stockIn'])->name('stock-in.store');
+            Route::get('/stock-out', [AdminInventoryController::class, 'stockOutForm'])->name('stock-out');
+            Route::post('/stock-out', [AdminInventoryController::class, 'stockOut'])->name('stock-out.store');
             Route::get('/logs', [AdminInventoryController::class, 'logs'])->name('logs');
             Route::post('/bulk-update', [AdminInventoryController::class, 'bulkUpdate'])->name('bulk-update');
-            Route::get('/low-stock', [AdminInventoryController::class, 'lowStock'])->name('low-stock');
         });
 
         // Analytics & Reporting
@@ -184,7 +206,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/coupons/bulk-action', [AdminCouponController::class, 'bulkAction'])->name('coupons.bulk-action');
 
         // Settings Management (Super Admin & Admin only)
-        Route::middleware(['check.admin.role:super_admin,admin'])->prefix('settings')->name('settings.')->group(function () {
+        Route::middleware(['admin.role:super_admin,admin'])->prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [AdminSettingsController::class, 'index'])->name('index');
             Route::patch('/general', [AdminSettingsController::class, 'updateGeneral'])->name('general');
             Route::patch('/email', [AdminSettingsController::class, 'updateEmail'])->name('email');
@@ -192,8 +214,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::patch('/shipping', [AdminSettingsController::class, 'updateShipping'])->name('shipping');
         });
 
+        // Audit Logs
+        Route::prefix('audit-logs')->name('audit-logs.')->group(function () {
+            Route::get('/', [AuditLogController::class, 'index'])->name('index');
+            Route::get('/{auditLog}', [AuditLogController::class, 'show'])->name('show');
+        });
+
         // Admin User Management (Super Admin only)
-        Route::middleware(['check.admin.role:super_admin'])->prefix('admin-users')->name('admin-users.')->group(function () {
+        Route::middleware(['admin.role:super_admin'])->prefix('admin-users')->name('admin-users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
             Route::post('/', [AdminUserController::class, 'store'])->name('store');

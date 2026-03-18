@@ -11,9 +11,14 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::withCount('products')
+        $categories = Category::withCount('products', 'children')
+            ->whereNull('parent_id')
+            ->with(['children' => function ($query) {
+                $query->withCount('products');
+            }])
+            ->orderBy('sort_order')
             ->orderBy('name')
-            ->paginate(15);
+            ->get();
 
         return view('admin.categories.index', compact('categories'));
     }
@@ -37,12 +42,21 @@ class CategoryController extends Controller
             'sort_order' => 'nullable|integer|min:0',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:500',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
+
+        $imageUrl = null;
+        if ($request->hasFile('image')) {
+            $filename = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
+            $request->file('image')->move(public_path('images/categories'), $filename);
+            $imageUrl = '/images/categories/' . $filename;
+        }
 
         $category = Category::create([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
+            'image_url' => $imageUrl,
             'parent_id' => $request->parent_id,
             'is_active' => $request->boolean('is_active', true),
             'sort_order' => $request->sort_order ?? 0,
@@ -83,9 +97,10 @@ class CategoryController extends Controller
             'sort_order' => 'nullable|integer|min:0',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:500',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        $category->update([
+        $data = [
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
@@ -94,7 +109,24 @@ class CategoryController extends Controller
             'sort_order' => $request->sort_order ?? 0,
             'meta_title' => $request->meta_title,
             'meta_description' => $request->meta_description,
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($category->image_url && file_exists(public_path($category->image_url))) {
+                unlink(public_path($category->image_url));
+            }
+            $filename = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
+            $request->file('image')->move(public_path('images/categories'), $filename);
+            $data['image_url'] = '/images/categories/' . $filename;
+        } elseif ($request->boolean('remove_image')) {
+            if ($category->image_url && file_exists(public_path($category->image_url))) {
+                unlink(public_path($category->image_url));
+            }
+            $data['image_url'] = null;
+        }
+
+        $category->update($data);
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category updated successfully.');

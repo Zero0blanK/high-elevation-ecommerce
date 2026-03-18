@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class BirthdayDiscount extends Mailable implements ShouldQueue
+class BirthdayDiscount extends Mailable
 {
     use Queueable, SerializesModels;
 

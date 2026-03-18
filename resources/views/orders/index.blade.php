@@ -74,8 +74,8 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 @foreach($order->items->take(3) as $item)
                                     <div class="flex items-center space-x-3">
-                                        @if($item->product && $item->product->image_url)
-                                            <img src="{{ $item->product->image_url }}" 
+                                        @if($item->product && $item->product->primaryImage)
+                                            <img src="{{ $item->product->primaryImage->image_url }}" 
                                                  alt="{{ $item->product->name }}"
                                                  class="w-12 h-12 object-cover rounded-md">
                                         @else

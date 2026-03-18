@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\OrderController as ApiOrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerAddressController as ApiCustomerAddressController;
 use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\CartController as ApiCartController;
+use App\Http\Controllers\Api\CurrencyController as ApiCurrencyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +41,13 @@ Route::prefix('cart')->group(function () {
 // Webhooks
 Route::prefix('webhooks')->group(function () {
     Route::post('/stripe', [WebhookController::class, 'stripeWebhook']);
+    Route::post('/paypal', [WebhookController::class, 'paypalWebhook']);
+});
+
+// Currency API
+Route::prefix('currencies')->group(function () {
+    Route::get('/', [ApiCurrencyController::class, 'index']);
+    Route::get('/convert', [ApiCurrencyController::class, 'convert']);
 });
 
 /*

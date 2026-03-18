@@ -3,194 +3,105 @@
 @section('title', 'My Profile')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-title-box">
-                <div class="page-title-right">
-                    <a href="{{ route('admin.profile.edit') }}" class="btn btn-primary">
-                        <i class="mdi mdi-pencil me-1"></i> Edit Profile
-                    </a>
-                </div>
-                <h4 class="page-title">My Profile</h4>
-            </div>
-        </div>
+<div class="py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+    {{-- Header --}}
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+        <p class="mt-1 text-sm text-gray-500">View and manage your account information.</p>
     </div>
 
-    <div class="row">
-        <div class="col-xl-4 col-lg-5">
-            <div class="card text-center">
-                <div class="card-body">
-                    <img src="{{ asset('admin/images/users/avatar-1.jpg') }}" class="rounded-circle avatar-lg img-thumbnail" alt="profile-image">
-                    
-                    <h4 class="mb-0 mt-2">{{ $admin->name }}</h4>
-                    <p class="text-muted font-14">{{ $admin->role_display }}</p>
+    {{-- Success Messages --}}
+    @if(session('success'))
+        <div class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            <svg class="h-5 w-5 shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            {{ session('success') }}
+        </div>
+    @endif
 
-                    <div class="text-start mt-3">
-                        <h4 class="font-13 text-uppercase">About Me :</h4>
-                        <p class="text-muted font-13 mb-3">
-                            Administrator with {{ $admin->role }} privileges. 
-                            Member since {{ $admin->created_at->format('F Y') }}.
-                        </p>
-                        
-                        <p class="text-muted mb-2 font-13">
-                            <strong>Full Name :</strong> 
-                            <span class="ms-2">{{ $admin->name }}</span>
-                        </p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {{-- Avatar Card --}}
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-gradient-to-br from-amber-500 to-amber-700 h-28"></div>
+                <div class="px-6 pb-6 text-center -mt-14">
+                    <img class="h-28 w-28 rounded-full ring-4 ring-white mx-auto object-cover shadow-md"
+                         src="https://ui-avatars.com/api/?name={{ urlencode($admin->name) }}&background=d97706&color=fff&size=112&font-size=0.4&bold=true"
+                         alt="{{ $admin->name }}">
+                    <h2 class="mt-4 text-xl font-bold text-gray-900">{{ $admin->name }}</h2>
+                    @php
+                        $roleColors = [
+                            'super_admin' => 'bg-purple-100 text-purple-800',
+                            'admin' => 'bg-blue-100 text-blue-800',
+                            'manager' => 'bg-amber-100 text-amber-800',
+                            'staff' => 'bg-gray-100 text-gray-800',
+                        ];
+                    @endphp
+                    <span class="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $roleColors[$admin->role] ?? 'bg-gray-100 text-gray-800' }}">
+                        {{ $admin->role_display }}
+                    </span>
+                    <p class="mt-2 text-sm text-gray-500">{{ $admin->email }}</p>
+                </div>
 
-                        <p class="text-muted mb-2 font-13">
-                            <strong>Email :</strong> 
-                            <span class="ms-2">{{ $admin->email }}</span>
-                        </p>
-
-                        <p class="text-muted mb-2 font-13">
-                            <strong>Role :</strong> 
-                            <span class="ms-2">{{ $admin->role_display }}</span>
-                        </p>
-
-                        <p class="text-muted mb-2 font-13">
-                            <strong>Status :</strong> 
-                            <span class="ms-2">
-                                @if($admin->is_active)
-                                    <span class="badge bg-success">Active</span>
-                                @else
-                                    <span class="badge bg-danger">Inactive</span>
-                                @endif
-                            </span>
-                        </p>
-
-                        <p class="text-muted mb-1 font-13">
-                            <strong>Last Login :</strong> 
-                            <span class="ms-2">
-                                {{ $admin->last_login_at ? $admin->last_login_at->format('M d, Y h:i A') : 'Never' }}
-                            </span>
-                        </p>
-                    </div>
+                {{-- Quick Actions --}}
+                <div class="border-t border-gray-200 px-6 py-4 space-y-3">
+                    <a href="{{ route('admin.profile.edit') }}"
+                       class="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Edit Profile
+                    </a>
+                    <a href="{{ route('admin.profile.edit') }}#change-password"
+                       class="w-full flex items-center justify-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium px-4 py-2 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        Change Password
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-8 col-lg-7">
-            <div class="card">
-                <div class="card-body">
-                    <ul class="nav nav-pills bg-nav-pills nav-justified mb-3">
-                        <li class="nav-item">
-                            <a href="#profile" data-bs-toggle="tab" aria-expanded="true" class="nav-link rounded-0 active">
-                                Profile Information
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#security" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-0">
-                                Security Settings
-                            </a>
-                        </li>
-                    </ul>
-                    
-                    <div class="tab-content">
-                        <div class="tab-pane show active" id="profile">
-                            <h5 class="mb-4 text-uppercase"><i class="mdi mdi-account-circle me-1"></i> Personal Info</h5>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="firstname" class="form-label">Full Name</label>
-                                        <input type="text" class="form-control" id="firstname" value="{{ $admin->name }}" readonly>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" value="{{ $admin->email }}" readonly>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="role" class="form-label">Role</label>
-                                        <input type="text" class="form-control" id="role" value="{{ $admin->role_display }}" readonly>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="status" class="form-label">Status</label>
-                                        <input type="text" class="form-control" id="status" value="{{ $admin->is_active ? 'Active' : 'Inactive' }}" readonly>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="created" class="form-label">Member Since</label>
-                                        <input type="text" class="form-control" id="created" value="{{ $admin->created_at->format('F d, Y') }}" readonly>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="lastlogin" class="form-label">Last Login</label>
-                                        <input type="text" class="form-control" id="lastlogin" value="{{ $admin->last_login_at ? $admin->last_login_at->format('M d, Y h:i A') : 'Never' }}" readonly>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="text-end">
-                                <a href="{{ route('admin.profile.edit') }}" class="btn btn-success mt-2">
-                                    <i class="mdi mdi-content-save"></i> Edit Profile
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="tab-pane" id="security">
-                            <h5 class="mb-4 text-uppercase"><i class="mdi mdi-security me-1"></i> Security Settings</h5>
-                            
-                            <form action="{{ route('admin.profile.password.update') }}" method="POST">
-                                @csrf
-                                @method('PATCH')
-                                
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="mb-3">
-                                            <label for="current_password" class="form-label">Current Password</label>
-                                            <input type="password" class="form-control @error('current_password') is-invalid @enderror" 
-                                                   id="current_password" name="current_password" required>
-                                            @error('current_password')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="password" class="form-label">New Password</label>
-                                            <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                                                   id="password" name="password" required>
-                                            @error('password')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="password_confirmation" class="form-label">Confirm New Password</label>
-                                            <input type="password" class="form-control" 
-                                                   id="password_confirmation" name="password_confirmation" required>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="text-end">
-                                    <button type="submit" class="btn btn-success mt-2">
-                                        <i class="mdi mdi-content-save"></i> Update Password
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+        {{-- Info Card --}}
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Account Details</h3>
                 </div>
+                <dl class="divide-y divide-gray-100">
+                    <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4 items-center">
+                        <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+                        <dd class="mt-1 text-sm font-medium text-gray-900 sm:col-span-2 sm:mt-0">{{ $admin->name }}</dd>
+                    </div>
+                    <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4 items-center">
+                        <dt class="text-sm font-medium text-gray-500">Email Address</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ $admin->email }}</dd>
+                    </div>
+                    <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4 items-center">
+                        <dt class="text-sm font-medium text-gray-500">Role</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ $admin->role_display }}</dd>
+                    </div>
+                    <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4 items-center">
+                        <dt class="text-sm font-medium text-gray-500">Status</dt>
+                        <dd class="mt-1 sm:col-span-2 sm:mt-0">
+                            @if($admin->is_active)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Active
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Inactive
+                                </span>
+                            @endif
+                        </dd>
+                    </div>
+                    <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4 items-center">
+                        <dt class="text-sm font-medium text-gray-500">Member Since</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ $admin->created_at->format('F d, Y') }}</dd>
+                    </div>
+                    <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4 items-center">
+                        <dt class="text-sm font-medium text-gray-500">Last Login</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                            {{ $admin->last_login_at ? $admin->last_login_at->format('M d, Y h:i A') : 'Never' }}
+                        </dd>
+                    </div>
+                </dl>
             </div>
         </div>
     </div>

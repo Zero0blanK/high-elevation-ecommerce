@@ -42,6 +42,23 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+    'paypal' => [
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'secret' => env('PAYPAL_SECRET'),
+        'sandbox' => env('PAYPAL_SANDBOX', true),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
+    ],
+
+    'gcash' => [
+        'public_key' => env('PAYMONGO_PUBLIC_KEY'),
+        'secret_key' => env('PAYMONGO_SECRET_KEY'),
+        'webhook_secret' => env('PAYMONGO_WEBHOOK_SECRET'),
+    ],
+
+    'exchange_rate' => [
+        'api_key' => env('EXCHANGE_RATE_API_KEY'),
+    ],
+
     'mailchimp' => [
         'key' => env('MAILCHIMP_API_KEY'),
         'list_id' => env('MAILCHIMP_LIST_ID'),

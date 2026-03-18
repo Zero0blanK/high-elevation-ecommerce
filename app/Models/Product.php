@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Traits\DynamicSoftDeletes;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes, DynamicSoftDeletes;
+    use HasFactory, SoftDeletes, DynamicSoftDeletes, Auditable;
 
     protected $fillable = [
         'name',
@@ -19,6 +20,7 @@ class Product extends Model
         'sku',
         'price',
         'sale_price',
+        'cost_price',
         'category_id',
         'stock_quantity',
         'low_stock_threshold',
@@ -26,6 +28,7 @@ class Product extends Model
         'roast_level',
         'grind_type',
         'origin',
+        'flavor_notes',
         'is_featured',
         'is_active',
         'meta_title',
@@ -35,6 +38,7 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'sale_price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'weight' => 'decimal:2',
         'is_featured' => 'boolean',
         'is_active' => 'boolean',
@@ -75,6 +79,31 @@ class Product extends Model
     public function cartItems()
     {
         return $this->hasMany(ShoppingCart::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function approvedReviews()
+    {
+        return $this->hasMany(ProductReview::class)->where('is_approved', true);
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return $this->approvedReviews()->avg('rating');
+    }
+
+    public function getReviewsCountAttribute()
+    {
+        return $this->approvedReviews()->count();
     }
 
     public function getDiscountedPriceAttribute()

@@ -1,0 +1,28 @@
+networks:
+  mysql-net:
+    driver: bridge
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: HighElevation_mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=high_elevation_db
+      - MYSQL_ROOT_PASSWORD=XCORKCMJQWOQ
+      - MYSQL_ROOT_HOST="%"
+    ports:
+      - '3307:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mysql-net
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  mysql_data:

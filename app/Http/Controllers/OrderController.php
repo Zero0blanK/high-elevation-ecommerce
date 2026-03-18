@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\OrderService;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    public function __construct()
+    protected OrderService $orderService;
+
+    public function __construct(OrderService $orderService)
     {
-        $this->middleware('auth:customer');
+        $this->orderService = $orderService;
     }
 
     public function index(Request $request)
@@ -18,14 +21,7 @@ class OrderController extends Controller
         $customer = Auth::guard('customer')->user();
         
         // Get order counts for tabs
-        $orderCounts = [
-            'all' => $customer->orders()->count(),
-            'pending' => $customer->orders()->where('status', 'pending')->count(),
-            'processing' => $customer->orders()->where('status', 'processing')->count(),
-            'shipped' => $customer->orders()->where('status', 'shipped')->count(),
-            'delivered' => $customer->orders()->where('status', 'delivered')->count(),
-            'cancelled' => $customer->orders()->where('status', 'cancelled')->count(),
-        ];
+        $orderCounts = $this->orderService->getOrderCountsByStatus($customer->id);
 
         // Build query
         $query = $customer->orders()->with(['items.product']);
@@ -128,7 +124,27 @@ class OrderController extends Controller
 
     public function showTrackingForm()
     {
-        return view('order.track');
+        return view('orders.track');
+    }
+
+    public function trackByOrderNumber($orderNumber)
+    {
+        // Get the order by order number
+        $order = Order::where('order_number', $orderNumber)
+            ->with(['items.product', 'customerAddress', 'customer'])
+            ->first();
+
+        if (!$order) {
+            abort(404, 'Order not found.');
+        }
+
+        // Get tracking data if tracking number exists
+        $trackingData = null;
+        if ($order->tracking_number) {
+            $trackingData = $this->getTrackingData($order->tracking_number, $order->shipping_method ?? 'standard');
+        }
+
+        return view('orders.show', compact('order', 'trackingData'));
     }
 
     public function trackByNumber(Request $request)
