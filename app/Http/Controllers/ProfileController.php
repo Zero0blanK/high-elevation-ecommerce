@@ -60,16 +60,14 @@ class ProfileController extends Controller
                 'email' => [
                     'required',
                     'string',
-                    'email',
                     'max:255',
                     'unique:customers,email,' . $customer->id,
+                    'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
                 ],
                 'phone' => [
                     'nullable',
                     'string',
-                    'regex:/^[0-9]+$/',
-                    'min:10',
-                    'max:15',
+                    'regex:/^\+?[1-9]\d{1,14}$/', // E.164 international phone format
                 ],
                 'date_of_birth' => [
                     'nullable',
@@ -79,7 +77,8 @@ class ProfileController extends Controller
             ], [
                 'first_name.regex' => 'First name can only contain letters, spaces, and hyphens.',
                 'last_name.regex' => 'Last name can only contain letters, spaces, and hyphens.',
-                'phone.regex' => 'Phone number can only contain numbers.',
+                'email.regex' => 'Please enter a valid email address.',
+                'phone.regex' => 'Please enter a valid phone number (e.g., +639123456789 or 09123456789).',
                 'date_of_birth.before' => 'Date of birth must be in the past.',
             ]);
 
@@ -261,7 +260,6 @@ class ProfileController extends Controller
                 'current_password' => [
                     'required',
                     'string',
-                    'min:8'
                 ],
                 'password' => [
                     'required',
@@ -269,21 +267,20 @@ class ProfileController extends Controller
                     'min:8',
                     'confirmed',
                     'different:current_password',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\#^()_+=\[\]{}|\\:";\'<>,.\/~`-])[A-Za-z\d@$!%*?&\#^()_+=\[\]{}|\\:";\'<>,.\/~`-]{8,}$/',
                 ],
                 'password_confirmation' => [
                     'required',
                     'string',
-                    'min:8'
                 ]
             ], [
                 'current_password.required' => 'Please enter your current password.',
-                'current_password.min' => 'Current password must be at least 8 characters.',
                 'password.required' => 'Please enter a new password.',
                 'password.min' => 'New password must be at least 8 characters.',
                 'password.confirmed' => 'Password confirmation does not match.',
                 'password.different' => 'New password must be different from your current password.',
+                'password.regex' => 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character.',
                 'password_confirmation.required' => 'Please confirm your new password.',
-                'password_confirmation.min' => 'Password confirmation must be at least 8 characters.'
             ]);
 
             $customer = Auth::guard('customer')->user();

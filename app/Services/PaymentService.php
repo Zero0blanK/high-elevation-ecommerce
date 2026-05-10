@@ -4,216 +4,147 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Payment;
-use Stripe\Stripe;
-use Stripe\PaymentIntent;
-use Stripe\Exception\CardException;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
-    public function __construct()
+    public function createPaymentIntent(Order $order, array $paymentData = []): array
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
-    }
+        $paymongoSecretKey = config('services.paymongo.secret_key');
 
-    public function createPaymentIntent(Order $order, array $paymentData = [])
-    {
-        try {
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $order->total_amount * 100, // Convert to cents
-                'currency' => strtolower($order->currency),
-                'payment_method_types' => ['card'],
-                'metadata' => [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                ],
-                'description' => "Payment for order #{$order->order_number}",
-            ]);
+        if (empty($paymongoSecretKey)) {
+            throw new \Exception('PayMongo is not configured.');
+        }
 
-            // Create payment record
-            $payment = Payment::create([
-                'order_id' => $order->id,
-                'payment_method' => 'stripe',
-                'payment_gateway' => 'stripe',
-                'transaction_id' => $paymentIntent->id,
-                'amount' => $order->total_amount,
-                'currency' => $order->currency,
-                'status' => 'pending',
-                'gateway_response' => [
-                    'payment_intent_id' => $paymentIntent->id,
-                    'client_secret' => $paymentIntent->client_secret,
+        $customerName = trim(($order->customer->first_name ?? '') . ' ' . ($order->customer->last_name ?? ''));
+
+        $response = Http::withBasicAuth($paymongoSecretKey, '')
+            ->post('https://api.paymongo.com/v1/sources', [
+                'data' => [
+                    'attributes' => [
+                        'amount' => (int) ($order->total_amount * 100),
+                        'redirect' => [
+                            'success' => route('checkout.paymongo.success', ['orderNumber' => $order->order_number]),
+                            'failed' => route('checkout.paymongo.failed', ['orderNumber' => $order->order_number]),
+                        ],
+                        'type' => 'gcash',
+                        'currency' => 'PHP',
+                        'billing' => [
+                            'name' => $customerName !== '' ? $customerName : 'Customer',
+                            'email' => $order->customer->email ?? '',
+                            'phone' => $order->customer->phone ?? null,
+                        ],
+                    ],
                 ],
             ]);
 
-            return [
-                'payment' => $payment,
-                'client_secret' => $paymentIntent->client_secret,
-                'payment_intent_id' => $paymentIntent->id
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('Payment intent creation failed', [
+        if ($response->failed()) {
+            Log::error('PayMongo source creation failed', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage()
+                'response' => $response->json(),
             ]);
-            
-            throw new \Exception('Failed to create payment intent: ' . $e->getMessage());
+
+            throw new \Exception('Failed to create PayMongo payment.');
         }
+
+        $source = $response->json('data');
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'payment_method' => 'paymongo',
+            'payment_gateway' => 'paymongo',
+            'transaction_id' => $source['id'] ?? null,
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'status' => 'pending',
+            'gateway_response' => $source ?? [],
+        ]);
+
+        return [
+            'payment' => $payment,
+            'payment_url' => $source['attributes']['redirect']['checkout_url'] ?? null,
+            'transaction_id' => $source['id'] ?? null,
+        ];
     }
 
-    public function confirmPayment($paymentIntentId, Order $order)
+    public function confirmPayment($transactionId, Order $order): bool
     {
-        try {
-            $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
-            
-            $payment = Payment::where('transaction_id', $paymentIntentId)
-                ->where('order_id', $order->id)
-                ->first();
+        $payment = Payment::where('transaction_id', $transactionId)
+            ->where('order_id', $order->id)
+            ->first();
 
-            if (!$payment) {
-                throw new \Exception('Payment record not found');
-            }
-
-            if ($paymentIntent->status === 'succeeded') {
-                $payment->update([
-                    'status' => 'completed',
-                    'gateway_transaction_id' => $paymentIntent->charges->data[0]->id ?? null,
-                    'processed_at' => now(),
-                    'gateway_response' => array_merge($payment->gateway_response, [
-                        'payment_intent' => $paymentIntent->toArray()
-                    ])
-                ]);
-
-                $order->update([
-                    'payment_status' => 'paid',
-                    'status' => 'processing'
-                ]);
-
-                // Send order confirmation email
-                \Mail::to($order->customer->email)->send(new \App\Mail\OrderConfirmation($order));
-
-                return true;
-            }
-
-            return false;
-
-        } catch (\Exception $e) {
-            Log::error('Payment confirmation failed', [
-                'payment_intent_id' => $paymentIntentId,
-                'order_id' => $order->id,
-                'error' => $e->getMessage()
-            ]);
-            
-            throw new \Exception('Payment confirmation failed: ' . $e->getMessage());
-        }
-    }
-
-    public function refundPayment(Payment $payment, $amount = null)
-    {
-        try {
-            $refundAmount = $amount ? ($amount * 100) : ($payment->amount * 100);
-            
-            $refund = \Stripe\Refund::create([
-                'payment_intent' => $payment->transaction_id,
-                'amount' => $refundAmount,
-                'metadata' => [
-                    'order_id' => $payment->order_id,
-                    'reason' => 'requested_by_customer'
-                ]
-            ]);
-
-            $payment->update([
-                'status' => $amount && $amount < $payment->amount ? 'partially_refunded' : 'refunded',
-                'gateway_response' => array_merge($payment->gateway_response, [
-                    'refund' => $refund->toArray()
-                ])
-            ]);
-
-            $payment->order()->update([
-                'payment_status' => 'refunded',
-                'status' => 'refunded'
-            ]);
-
-            return $refund;
-
-        } catch (\Exception $e) {
-            Log::error('Payment refund failed', [
-                'payment_id' => $payment->id,
-                'error' => $e->getMessage()
-            ]);
-            
-            throw new \Exception('Refund failed: ' . $e->getMessage());
-        }
-    }
-
-    public function handleWebhook($payload, $signature)
-    {
-        $webhookSecret = config('services.stripe.webhook_secret');
-        
-        try {
-            $event = \Stripe\Webhook::constructEvent($payload, $signature, $webhookSecret);
-        } catch (\Stripe\Exception\SignatureVerificationException $e) {
-            Log::error('Webhook signature verification failed', ['error' => $e->getMessage()]);
-            throw new \Exception('Webhook signature verification failed');
+        if (!$payment) {
+            throw new \Exception('Payment record not found');
         }
 
-        switch ($event['type']) {
-            case 'payment_intent.succeeded':
-                $this->handlePaymentSucceeded($event['data']['object']);
-                break;
-            
-            case 'payment_intent.payment_failed':
-                $this->handlePaymentFailed($event['data']['object']);
-                break;
-            
-            case 'charge.dispute.created':
-                $this->handleChargeDispute($event['data']['object']);
-                break;
-                
-            default:
-                Log::info('Unhandled webhook event', ['type' => $event['type']]);
-        }
+        $payment->update([
+            'status' => 'completed',
+            'processed_at' => now(),
+        ]);
+
+        $order->update([
+            'payment_status' => 'paid',
+            'status' => 'processing',
+        ]);
 
         return true;
     }
 
-    private function handlePaymentSucceeded($paymentIntent)
+    public function refundPayment(Payment $payment, $amount = null)
     {
-        $payment = Payment::where('transaction_id', $paymentIntent['id'])->first();
-        
-        if ($payment && $payment->status === 'pending') {
-            $this->confirmPayment($paymentIntent['id'], $payment->order);
-        }
+        throw new \Exception('Refund is not yet supported for PayMongo in this integration.');
     }
 
-    private function handlePaymentFailed($paymentIntent)
+    public function handleWebhook($payload, $signature)
     {
-        $payment = Payment::where('transaction_id', $paymentIntent['id'])->first();
-        
-        if ($payment) {
+        $event = json_decode($payload, true);
+
+        if (!is_array($event)) {
+            throw new \Exception('Invalid webhook payload');
+        }
+
+        $eventType = data_get($event, 'data.attributes.type') ?? data_get($event, 'type');
+
+        $candidateTransactionIds = array_filter([
+            data_get($event, 'data.attributes.data.id'),
+            data_get($event, 'data.attributes.data.attributes.id'),
+            data_get($event, 'data.attributes.data.attributes.source.id'),
+            data_get($event, 'data.attributes.id'),
+        ]);
+
+        if (empty($candidateTransactionIds)) {
+            return true;
+        }
+
+        $payment = Payment::whereIn('transaction_id', $candidateTransactionIds)->first();
+
+        if (!$payment) {
+            return true;
+        }
+
+        if (in_array($eventType, ['payment.paid', 'source.chargeable'], true)) {
             $payment->update([
-                'status' => 'failed',
-                'gateway_response' => array_merge($payment->gateway_response, [
-                    'failure_reason' => $paymentIntent['last_payment_error']['message'] ?? 'Unknown error'
-                ])
+                'status' => 'completed',
+                'processed_at' => now(),
+                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $event]),
             ]);
 
-            $payment->order()->update(['payment_status' => 'failed']);
-
-            // Send payment failed notification
-            \Mail::to($payment->order->customer->email)->send(new \App\Mail\PaymentFailed($payment->order));
+            $payment->order->update([
+                'payment_status' => 'paid',
+                'status' => $payment->order->status === 'pending' ? 'processing' : $payment->order->status,
+            ]);
         }
-    }
 
-    private function handleChargeDispute($dispute)
-    {
-        // Handle charge disputes - notify admin
-        Log::warning('Charge dispute created', ['dispute_id' => $dispute['id']]);
-        
-        // Notify administrators
-        $adminEmails = \App\Models\Admin::where('is_active', true)->pluck('email');
-        if ($adminEmails->isNotEmpty()) {
-            \Mail::to($adminEmails)->send(new \App\Mail\ChargeDispute($dispute));
+        if (in_array($eventType, ['payment.failed', 'source.failed'], true)) {
+            $payment->update([
+                'status' => 'failed',
+                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $event]),
+            ]);
+
+            $payment->order->update(['payment_status' => 'failed']);
         }
+
+        return true;
     }
 }

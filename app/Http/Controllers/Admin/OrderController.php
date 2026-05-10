@@ -41,7 +41,8 @@ class OrderController extends Controller
     {
         $request->validate([
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled,refunded',
-            'tracking_number' => 'nullable|string',
+            'tracking_number' => 'required_if:status,shipped,delivered|nullable|string|max:100',
+            'shipping_method' => 'required_if:status,shipped,delivered|nullable|in:jnt,lbc',
             'notes' => 'nullable|string'
         ]);
 
@@ -49,6 +50,9 @@ class OrderController extends Controller
             $data = [];
             if ($request->filled('tracking_number')) {
                 $data['tracking_number'] = $request->tracking_number;
+            }
+            if ($request->filled('shipping_method')) {
+                $data['shipping_method'] = $request->shipping_method;
             }
             if ($request->filled('notes')) {
                 $data['notes'] = $request->notes;

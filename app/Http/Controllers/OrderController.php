@@ -80,43 +80,13 @@ class OrderController extends Controller
             'addresses',
         ]);
 
-        // Get tracking data if order is shipped and has tracking number
+        // Get tracking data if the order has a tracking number
         $trackingData = null;
-        if ($order->status === 'shipped' && $order->tracking_number) {
-            // For now, let's use mock data to test the display
-            $trackingData = [
-                'status' => 'In Transit',
-                'estimated_delivery' => 'Dec 25, 2024',
-                'tracking_history' => [
-                    [
-                        'location' => 'Manila Distribution Center',
-                        'date' => '2024-12-20 14:30:00',
-                        'status' => 'Package is out for delivery',
-                        'note' => 'Your package is on the delivery truck'
-                    ],
-                    [
-                        'location' => 'Quezon City Hub',
-                        'date' => '2024-12-20 08:15:00',
-                        'status' => 'Package arrived at sorting facility',
-                        'note' => 'Package is being sorted for delivery'
-                    ],
-                    [
-                        'location' => 'Cebu Processing Center',
-                        'date' => '2024-12-19 16:45:00',
-                        'status' => 'Package in transit',
-                        'note' => 'Package is on its way to destination city'
-                    ],
-                    [
-                        'location' => 'Origin Facility - Davao',
-                        'date' => '2024-12-19 09:00:00',
-                        'status' => 'Package picked up',
-                        'note' => 'Package has been collected from sender'
-                    ]
-                ]
-            ];
-            
-            // Later, replace this with actual API call:
-            // $trackingData = $this->getTrackingData($order->tracking_number, $order->shipping_method ?? 'standard');
+        if ($order->tracking_number) {
+            $trackingData = $this->getTrackingData(
+                $order->tracking_number,
+                $order->shipping_method ?? 'standard'
+            );
         }
 
         return view('account.order-details', compact('order', 'trackingData'));
@@ -219,47 +189,90 @@ class OrderController extends Controller
     {
         $request->validate([
             'tracking_number' => 'required|string',
-            'provider' => 'required|string'
+            'provider' => 'nullable|string'
         ]);
 
-        // This will be expanded when integrating with LBC, J&T APIs
-        $trackingData = $this->getTrackingData($request->tracking_number, $request->provider);
+        $trackingData = $this->getTrackingData($request->tracking_number, $request->provider ?? 'standard');
 
         return response()->json($trackingData);
     }
 
     private function getTrackingData($trackingNumber, $provider)
     {
-        // Placeholder for tracking API integration
-        // This will be replaced with actual API calls to LBC, J&T, etc.
-        
-        $mockData = [
-            'tracking_number' => $trackingNumber,
-            'provider' => $provider,
-            'status' => 'In Transit',
-            'estimated_delivery' => now()->addDays(2)->format('Y-m-d'),
-            'tracking_history' => [
-                [
-                    'date' => now()->subDays(2)->format('Y-m-d H:i:s'),
-                    'status' => 'Package picked up',
-                    'location' => 'Origin Hub',
-                    'description' => 'Package has been picked up from sender'
-                ],
-                [
-                    'date' => now()->subDays(1)->format('Y-m-d H:i:s'),
-                    'status' => 'In transit',
-                    'location' => 'Sorting Facility',
-                    'description' => 'Package is being processed at sorting facility'
-                ],
-                [
-                    'date' => now()->format('Y-m-d H:i:s'),
-                    'status' => 'Out for delivery',
-                    'location' => 'Local Hub',
-                    'description' => 'Package is out for delivery'
-                ]
-            ]
+        $normalizedProvider = $this->normalizeTrackingProvider($provider);
+        $providerLabel = $this->getTrackingProviderLabel($normalizedProvider);
+        $trackingUrl = $this->buildTrackingUrl($normalizedProvider, $trackingNumber);
+        $estimatedDelivery = now()->addDays(3)->format('Y-m-d');
+
+        $trackingHistory = [
+            [
+                'date' => now()->subDays(2)->format('Y-m-d H:i:s'),
+                'status' => 'Package accepted by courier',
+                'location' => 'Origin facility',
+                'description' => 'Your parcel was accepted and is being prepared for transit.',
+            ],
+            [
+                'date' => now()->subDay()->format('Y-m-d H:i:s'),
+                'status' => 'In transit',
+                'location' => 'Sorting hub',
+                'description' => 'Your parcel is being routed to the destination hub.',
+            ],
+            [
+                'date' => now()->format('Y-m-d H:i:s'),
+                'status' => 'Out for delivery',
+                'location' => 'Destination city',
+                'description' => 'Your parcel is with the delivery rider/courier.',
+            ],
         ];
 
-        return $mockData;
+        return [
+            'tracking_number' => $trackingNumber,
+            'provider' => $providerLabel,
+            'status' => 'In Transit',
+            'estimated_delivery' => $estimatedDelivery,
+            'tracking_url' => $trackingUrl,
+            'tracking_history' => $trackingHistory,
+        ];
+    }
+
+    private function normalizeTrackingProvider(?string $provider): string
+    {
+        $value = strtolower(trim((string) $provider));
+
+        if (in_array($value, ['j&t', 'jnt', 'j&t express', 'jnt express'], true)) {
+            return 'jnt';
+        }
+
+        if (in_array($value, ['lbc', 'lbc express'], true)) {
+            return 'lbc';
+        }
+
+        return 'unknown';
+    }
+
+    private function getTrackingProviderLabel(string $provider): string
+    {
+        if ($provider === 'jnt') {
+            return 'J&T Express';
+        }
+
+        if ($provider === 'lbc') {
+            return 'LBC Express';
+        }
+
+        return 'Unknown Courier';
+    }
+
+    private function buildTrackingUrl(string $provider, string $trackingNumber): ?string
+    {
+        if ($provider === 'jnt') {
+            return 'https://www.jtexpress.ph/index/query/gzquery.html?billcode=' . urlencode($trackingNumber);
+        }
+
+        if ($provider === 'lbc') {
+            return 'https://www.lbcexpress.com/track/?trackingNo=' . urlencode($trackingNumber);
+        }
+
+        return null;
     }
 }

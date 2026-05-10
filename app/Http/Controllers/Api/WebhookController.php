@@ -9,17 +9,17 @@ use Illuminate\Support\Facades\Log;
 
 class WebhookController extends Controller
 {
-    public function stripeWebhook(Request $request)
+    public function paymongoWebhook(Request $request)
     {
         $payload = $request->getContent();
-        $signature = $request->header('Stripe-Signature');
+        $signature = $request->header('Paymongo-Signature', '');
 
         try {
             app(PaymentService::class)->handleWebhook($payload, $signature);
             
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            Log::error('Stripe webhook error: ' . $e->getMessage());
+            Log::error('PayMongo webhook error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }

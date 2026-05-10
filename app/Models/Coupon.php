@@ -140,6 +140,6 @@ class Coupon extends Model
             return $this->value . '%';
         }
 
-        return '$' . number_format($this->value, 2);
+        return config('ecommerce.currency.symbol', '₱') . number_format($this->value, 2);
     }
 }

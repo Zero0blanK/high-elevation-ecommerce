@@ -95,30 +95,40 @@ class CheckoutController extends Controller
         }
     }
 
-    public function gcashSuccess($orderNumber)
+    public function paymongoSuccess($orderNumber)
     {
         try {
             $customer = Auth::guard('customer')->user();
-            $order = $this->checkoutService->handleGCashSuccess($orderNumber, $customer->id);
+            $order = $this->checkoutService->handlePayMongoSuccess($orderNumber, $customer->id);
 
             return view('checkout.success', compact('order'));
         } catch (\Exception $e) {
-            Log::error('GCash success callback failed: ' . $e->getMessage());
+            Log::error('PayMongo success callback failed: ' . $e->getMessage());
             return redirect()->route('home')->with('error', 'Payment verification failed.');
         }
     }
 
-    public function gcashFailed($orderNumber)
+    public function paymongoFailed($orderNumber)
     {
         try {
             $customer = Auth::guard('customer')->user();
-            $order = $this->checkoutService->handleGCashFailed($orderNumber, $customer->id);
+            $order = $this->checkoutService->handlePayMongoFailed($orderNumber, $customer->id);
 
             return redirect()->route('checkout.index')
-                ->with('error', 'GCash payment failed. Please try again or use a different payment method.');
+                ->with('error', 'PayMongo payment failed. Please try again or use a different payment method.');
         } catch (\Exception $e) {
-            Log::error('GCash failed callback failed: ' . $e->getMessage());
+            Log::error('PayMongo failed callback failed: ' . $e->getMessage());
             return redirect()->route('cart.index')->with('error', 'An error occurred. Please try again.');
         }
+    }
+
+    public function gcashSuccess($orderNumber)
+    {
+        return $this->paymongoSuccess($orderNumber);
+    }
+
+    public function gcashFailed($orderNumber)
+    {
+        return $this->paymongoFailed($orderNumber);
     }
 }

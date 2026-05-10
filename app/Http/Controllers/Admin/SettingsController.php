@@ -99,9 +99,9 @@ class SettingsController extends Controller
     public function updatePayment(Request $request)
     {
         $request->validate([
-            'stripe_enabled' => 'boolean',
-            'stripe_public_key' => 'required_if:stripe_enabled,1|nullable|string',
-            'stripe_secret_key' => 'required_if:stripe_enabled,1|nullable|string',
+            'paymongo_enabled' => 'boolean',
+            'paymongo_public_key' => 'nullable|string',
+            'paymongo_secret_key' => 'required_if:paymongo_enabled,1|nullable|string',
             'paypal_enabled' => 'boolean',
             'paypal_client_id' => 'required_if:paypal_enabled,1|nullable|string',
             'paypal_client_secret' => 'required_if:paypal_enabled,1|nullable|string',
@@ -110,9 +110,9 @@ class SettingsController extends Controller
         ]);
 
         $settings = [
-            'stripe_enabled' => $request->boolean('stripe_enabled'),
-            'stripe_public_key' => $request->stripe_public_key,
-            'stripe_secret_key' => $request->stripe_secret_key,
+            'paymongo_enabled' => $request->boolean('paymongo_enabled'),
+            'paymongo_public_key' => $request->paymongo_public_key,
+            'paymongo_secret_key' => $request->paymongo_secret_key,
             'paypal_enabled' => $request->boolean('paypal_enabled'),
             'paypal_client_id' => $request->paypal_client_id,
             'paypal_client_secret' => $request->paypal_client_secret,

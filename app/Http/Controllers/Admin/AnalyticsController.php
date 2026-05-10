@@ -128,15 +128,15 @@ class AnalyticsController extends Controller
             switch ($type) {
                 case 'sales':
                     fputcsv($handle, ['Sales Report']);
-                    fputcsv($handle, ['Total Revenue', '$' . number_format($data['total_revenue'] ?? 0, 2)]);
+                    fputcsv($handle, ['Total Revenue', '₱' . number_format($data['total_revenue'] ?? 0, 2)]);
                     fputcsv($handle, ['Total Orders', $data['total_orders'] ?? 0]);
-                    fputcsv($handle, ['Average Order Value', '$' . number_format($data['average_order_value'] ?? 0, 2)]);
+                    fputcsv($handle, ['Average Order Value', '₱' . number_format($data['average_order_value'] ?? 0, 2)]);
                     fputcsv($handle, []);
                     fputcsv($handle, ['Date', 'Revenue', 'Orders']);
                     foreach ($data['daily_sales'] ?? [] as $day) {
                         fputcsv($handle, [
                             $day['date'] ?? '',
-                            '$' . number_format($day['total'] ?? 0, 2),
+                            '₱' . number_format($day['total'] ?? 0, 2),
                             $day['orders'] ?? 0,
                         ]);
                     }
@@ -146,7 +146,7 @@ class AnalyticsController extends Controller
                         fputcsv($handle, [
                             $product['name'] ?? '',
                             $product['total_sold'] ?? 0,
-                            '$' . number_format($product['revenue'] ?? 0, 2),
+                            '₱' . number_format($product['revenue'] ?? 0, 2),
                         ]);
                     }
                     break;
@@ -155,14 +155,14 @@ class AnalyticsController extends Controller
                     fputcsv($handle, ['Customer Report']);
                     fputcsv($handle, ['New Customers', $data['new_customers'] ?? 0]);
                     fputcsv($handle, ['Returning Customers', $data['returning_customers'] ?? 0]);
-                    fputcsv($handle, ['Avg Lifetime Value', '$' . number_format($data['customer_lifetime_value'] ?? 0, 2)]);
+                    fputcsv($handle, ['Avg Lifetime Value', '₱' . number_format($data['customer_lifetime_value'] ?? 0, 2)]);
                     fputcsv($handle, []);
                     fputcsv($handle, ['Customer', 'Email', 'Total Spent', 'Orders']);
                     foreach ($data['top_customers'] ?? [] as $customer) {
                         fputcsv($handle, [
                             ($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''),
                             $customer['email'] ?? '',
-                            '$' . number_format($customer['total_spent'] ?? 0, 2),
+                            '₱' . number_format($customer['total_spent'] ?? 0, 2),
                             $customer['order_count'] ?? 0,
                         ]);
                     }
@@ -172,7 +172,7 @@ class AnalyticsController extends Controller
                     fputcsv($handle, ['Inventory Report']);
                     fputcsv($handle, ['Total Products', $data['total_products'] ?? 0]);
                     fputcsv($handle, ['Total Stock', $data['total_stock'] ?? 0]);
-                    fputcsv($handle, ['Inventory Value', '$' . number_format($data['inventory_value'] ?? 0, 2)]);
+                    fputcsv($handle, ['Inventory Value', '₱' . number_format($data['inventory_value'] ?? 0, 2)]);
                     fputcsv($handle, ['Out of Stock', $data['out_of_stock_count'] ?? 0]);
                     fputcsv($handle, []);
                     fputcsv($handle, ['Category', 'Products', 'Stock', 'Value']);
@@ -181,7 +181,7 @@ class AnalyticsController extends Controller
                             $cat['name'] ?? '',
                             $cat['product_count'] ?? 0,
                             $cat['total_stock'] ?? 0,
-                            '$' . number_format($cat['stock_value'] ?? 0, 2),
+                            '₱' . number_format($cat['stock_value'] ?? 0, 2),
                         ]);
                     }
                     break;

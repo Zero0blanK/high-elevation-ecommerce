@@ -93,8 +93,8 @@ class ProductRepository
     {
         $query = $this->product->newQuery()
             ->with(['category', 'primaryImage'])
-            ->active()
-            ->inStock();
+            ->active();
+        // Show all active products including out-of-stock ones
 
         if (!empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
@@ -136,7 +136,10 @@ class ProductRepository
         $sortField = $filters['sort'] ?? 'name';
         $sortDirection = $filters['direction'] ?? 'asc';
 
-        return $query->orderBy($sortField, $sortDirection)->paginate($perPage);
+        // Sort out-of-stock products to the end, then by requested sort
+        return $query->orderByRaw('CASE WHEN stock_quantity <= 0 THEN 1 ELSE 0 END')
+                     ->orderBy($sortField, $sortDirection)
+                     ->paginate($perPage);
     }
 
     public function getRelatedProducts(Product $product, int $limit = 4): Collection

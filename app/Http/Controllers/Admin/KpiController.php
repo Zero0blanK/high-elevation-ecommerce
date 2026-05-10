@@ -365,8 +365,8 @@ class KpiController extends Controller
             fputcsv($handle, []);
 
             fputcsv($handle, ['SALES METRICS']);
-            fputcsv($handle, ['Total Revenue', '$' . number_format($kpis['sales']['total_revenue'], 2)]);
-            fputcsv($handle, ['Average Order Value', '$' . number_format($kpis['sales']['average_order_value'], 2)]);
+            fputcsv($handle, ['Total Revenue', '₱' . number_format($kpis['sales']['total_revenue'], 2)]);
+            fputcsv($handle, ['Average Order Value', '₱' . number_format($kpis['sales']['average_order_value'], 2)]);
             fputcsv($handle, ['Total Orders', $kpis['sales']['total_orders']]);
             fputcsv($handle, ['Completed Orders', $kpis['sales']['completed_orders']]);
             fputcsv($handle, ['Cancelled Orders', $kpis['sales']['cancelled_orders']]);

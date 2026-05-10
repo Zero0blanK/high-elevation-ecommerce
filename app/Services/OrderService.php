@@ -66,6 +66,7 @@ class OrderService
                 'tax_amount' => $taxAmount,
                 'shipping_amount' => $shippingAmount,
                 'discount_amount' => $discountAmount,
+                'currency' => config('ecommerce.currency.default', 'PHP'),
                 'total_amount' => $totalAmount,
                 'payment_status' => 'pending'
             ]);

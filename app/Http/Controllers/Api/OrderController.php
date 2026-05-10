@@ -55,7 +55,7 @@ class OrderController extends Controller
             'shipping_address.country' => 'required|string|max:100',
             'billing_address' => 'nullable|array',
             'coupon_code' => 'nullable|string',
-            'payment_method' => 'required|in:stripe'
+            'payment_method' => 'required|in:gcash,paymongo_card,paymongo'
         ]);
 
         try {
@@ -90,7 +90,8 @@ class OrderController extends Controller
     public function confirmPayment(Request $request, Order $order)
     {
         $request->validate([
-            'payment_intent_id' => 'required|string'
+            'transaction_id' => 'required_without:payment_intent_id|string',
+            'payment_intent_id' => 'required_without:transaction_id|string',
         ]);
 
         if ($order->customer_id !== auth('sanctum')->id()) {
@@ -99,7 +100,7 @@ class OrderController extends Controller
 
         try {
             $success = $this->paymentService->confirmPayment(
-                $request->payment_intent_id,
+                $request->transaction_id ?? $request->payment_intent_id,
                 $order
             );
 

@@ -151,4 +151,41 @@ class CategoryController extends Controller
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category deleted successfully.');
     }
+
+    public function trashed()
+    {
+        $products = \App\Models\Product::onlyTrashed()
+            ->with('category')
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(20);
+
+        return view('admin.categories.trashed', compact('products'));
+    }
+
+    public function restoreProduct($id)
+    {
+        $product = \App\Models\Product::onlyTrashed()->findOrFail($id);
+        $product->restore();
+
+        return redirect()->back()
+            ->with('success', 'Product restored successfully.');
+    }
+
+    public function forceDeleteProduct($id)
+    {
+        $product = \App\Models\Product::onlyTrashed()->findOrFail($id);
+        
+        // Delete associated images
+        foreach ($product->images as $image) {
+            if (file_exists(storage_path('app/public/' . $image->image_url))) {
+                unlink(storage_path('app/public/' . $image->image_url));
+            }
+            $image->forceDelete();
+        }
+        
+        $product->forceDelete();
+
+        return redirect()->back()
+            ->with('success', 'Product permanently deleted.');
+    }
 }

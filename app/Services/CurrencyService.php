@@ -26,7 +26,7 @@ class CurrencyService
     {
         return Cache::remember('currencies.default', 3600, function () {
             return $this->currencyRepository->getDefault()
-                ?? $this->currencyRepository->findByCode('USD');
+                ?? $this->currencyRepository->findByCode('PHP');
         });
     }
 
@@ -53,7 +53,7 @@ class CurrencyService
             : $this->getDefaultCurrency();
 
         if (!$currency) {
-            return '$' . number_format($amount, 2);
+            return '₱' . number_format($amount, 2);
         }
 
         return $currency->format($amount);

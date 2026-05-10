@@ -36,7 +36,7 @@ class CurrencyController extends Controller
             'original' => $request->amount,
             'converted' => $converted,
             'to' => $request->to,
-            'from' => $request->from ?? 'USD',
+            'from' => $request->from ?? 'PHP',
         ]);
     }
 }
