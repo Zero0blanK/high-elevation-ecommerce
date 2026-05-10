@@ -3,6 +3,21 @@ networks:
     driver: bridge
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: HighElevation_app
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    networks:
+      - mysql-net
+    depends_on:
+      mysql:
+        condition: service_healthy
   mysql:
     image: mysql:8.0
     container_name: HighElevation_mysql
