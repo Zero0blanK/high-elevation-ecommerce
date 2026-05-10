@@ -182,7 +182,7 @@
                 </li>
 
                 {{-- Coupons --}}
-                <li>
+                {{-- <li>
                     <a href="{{ route('admin.coupons.index') }}"
                        @class([
                            'group flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -195,7 +195,7 @@
                         </svg>
                         Coupons
                     </a>
-                </li>
+                </li> --}}
 
                 {{-- Audit Logs --}}
                 <li>

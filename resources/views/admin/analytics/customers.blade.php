@@ -105,7 +105,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ number_format($customer['order_count'] ?? 0) }}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${{ number_format($customer['total_spent'] ?? 0, 2) }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">₱{{ number_format($customer['total_spent'] ?? 0, 2) }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -126,3 +126,4 @@
     @endif
 </div>
 @endsection
+

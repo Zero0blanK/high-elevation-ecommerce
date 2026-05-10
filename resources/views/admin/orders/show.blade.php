@@ -81,7 +81,10 @@
                             <div class="flex-1 h-0.5 {{ ($stepState === 'completed') ? 'bg-amber-500' : 'bg-gray-200' }}"></div>
                         @endif
                     </div>
-                    <span class="mt-2 text-xs font-medium {{ $stepState === 'inactive' ? 'text-gray-400' : 'text-gray-700' }}">{{ ucfirst($step) }}</span>
+                    <div class="w-full flex {{ ($step == 'pending' ? 'justify-start' : '') .
+                    ($step == 'delivered' ? 'justify-end' : 'justify-center' )}}">
+                        <span class="mt-2 text-xs font-medium {{ $stepState === 'inactive' ? 'text-gray-400' : 'text-gray-700' }}">{{ ucfirst($step) }}</span>
+                    </div>
                 </div>
             @endforeach
         </div>
@@ -91,6 +94,16 @@
                 This order has been <strong>{{ $order->status }}</strong>.
             </div>
         @endif
+        <div class="mt-4 p-3 rounded-lg border {{ $order->tracking_number ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50' }}">
+            <p class="text-xs font-medium uppercase tracking-wide {{ $order->tracking_number ? 'text-blue-700' : 'text-gray-500' }}">Tracking Number</p>
+            <p class="mt-1 text-sm font-mono {{ $order->tracking_number ? 'text-blue-900' : 'text-gray-600' }}">
+                {{ $order->tracking_number ?: 'Not assigned yet' }}
+            </p>
+            <p class="mt-1 text-xs {{ $order->shipping_method ? 'text-blue-700' : 'text-gray-500' }}">
+                Courier:
+                {{ $order->shipping_method === 'jnt' ? 'J&T Express' : ($order->shipping_method === 'lbc' ? 'LBC Express' : 'Not assigned yet') }}
+            </p>
+        </div>
     </div>
 
     {{-- Two-column layout --}}
@@ -119,7 +132,7 @@
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
                                             @if($item->product && $item->product->primaryImage)
-                                                <img src="{{ asset('storage/' . $item->product->primaryImage->image_url) }}" alt="{{ $item->product_name }}" class="h-10 w-10 rounded-lg object-cover border border-gray-100">
+                                                <img src="{{ asset( $item->product->primaryImage->image_url) }}" alt="{{ $item->product_name }}" class="h-10 w-10 rounded-lg object-cover border border-gray-100">
                                             @else
                                                 <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
                                                     <svg class="h-5 w-5 text-gray-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v14.25c0 .828.672 1.5 1.5 1.5z"/></svg>
@@ -130,8 +143,8 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-500">{{ $item->product_sku }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">{{ $item->quantity }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${{ number_format($item->unit_price, 2) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">${{ number_format($item->total_price, 2) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">₱{{ number_format($item->unit_price, 2) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">₱{{ number_format($item->total_price, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -145,25 +158,25 @@
                 <dl class="space-y-3">
                     <div class="flex justify-between text-sm">
                         <dt class="text-gray-500">Subtotal</dt>
-                        <dd class="font-medium text-gray-900">${{ number_format($order->subtotal, 2) }}</dd>
+                        <dd class="font-medium text-gray-900">₱{{ number_format($order->subtotal, 2) }}</dd>
                     </div>
                     <div class="flex justify-between text-sm">
                         <dt class="text-gray-500">Tax</dt>
-                        <dd class="font-medium text-gray-900">${{ number_format($order->tax_amount, 2) }}</dd>
+                        <dd class="font-medium text-gray-900">₱{{ number_format($order->tax_amount, 2) }}</dd>
                     </div>
                     <div class="flex justify-between text-sm">
                         <dt class="text-gray-500">Shipping</dt>
-                        <dd class="font-medium text-gray-900">${{ number_format($order->shipping_amount, 2) }}</dd>
+                        <dd class="font-medium text-gray-900">₱{{ number_format($order->shipping_amount, 2) }}</dd>
                     </div>
                     @if($order->discount_amount > 0)
                         <div class="flex justify-between text-sm">
                             <dt class="text-gray-500">Discount</dt>
-                            <dd class="font-medium text-green-600">−${{ number_format($order->discount_amount, 2) }}</dd>
+                            <dd class="font-medium text-green-600">−₱{{ number_format($order->discount_amount, 2) }}</dd>
                         </div>
                     @endif
                     <div class="flex justify-between items-center pt-3 border-t border-gray-200">
                         <dt class="text-base font-semibold text-gray-900">Total</dt>
-                        <dd class="text-lg font-bold text-amber-600">${{ number_format($order->total_amount, 2) }}</dd>
+                        <dd class="text-lg font-bold text-amber-600">₱{{ number_format($order->total_amount, 2) }}</dd>
                     </div>
                     <div class="flex justify-between items-center pt-2">
                         <dt class="text-sm text-gray-500">Payment Status</dt>
@@ -204,7 +217,7 @@
                                     <tr class="hover:bg-gray-50/50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ ucfirst($payment->payment_method ?? '—') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-500">{{ $payment->transaction_id ?? '—' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">${{ number_format($payment->amount, 2) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">₱{{ number_format($payment->amount, 2) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ $paymentColors[$payment->status] ?? 'bg-gray-100 text-gray-800' }}">
                                                 {{ ucfirst($payment->status) }}
@@ -233,25 +246,33 @@
                 <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="space-y-4">
                     @csrf
                     @method('PATCH')
-                    <div>
+                    <div class="relative">
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
+                        <svg class="absolute right-2.5 top-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         <select name="status" id="status" x-model="selectedStatus"
-                                class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                                class="w-full rounded-lg py-2 px-3 appearance-none border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                             @foreach(['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as $s)
                                 <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div x-show="selectedStatus === 'shipped'" x-transition>
+                    <div x-show="selectedStatus === 'shipped' || selectedStatus === 'delivered'" x-transition>
+                        <label for="shipping_method" class="block text-sm font-medium text-gray-700 mb-1">Courier</label>
+                        <select name="shipping_method" id="shipping_method"
+                                class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500 mb-3">
+                            <option value="">Select courier</option>
+                            <option value="jnt" {{ $order->shipping_method === 'jnt' ? 'selected' : '' }}>J&T Express</option>
+                            <option value="lbc" {{ $order->shipping_method === 'lbc' ? 'selected' : '' }}>LBC Express</option>
+                        </select>
                         <label for="tracking_number" class="block text-sm font-medium text-gray-700 mb-1">Tracking Number</label>
                         <input type="text" name="tracking_number" id="tracking_number" value="{{ $order->tracking_number }}"
                                placeholder="Enter tracking number"
-                               class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                               class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                     </div>
                     <div>
                         <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                         <textarea name="notes" id="notes" rows="3" placeholder="Add a note about this status change…"
-                                  class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500"></textarea>
+                                  class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500"></textarea>
                     </div>
                     <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm">
                         Update Status
@@ -392,7 +413,7 @@
                                 <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
                             </div>
                             <h3 id="refund-modal-title" class="mt-3 text-lg font-semibold text-gray-900">Issue Refund</h3>
-                            <p class="mt-1 text-sm text-gray-500">Order total: <strong class="text-gray-900">${{ number_format($order->total_amount, 2) }}</strong></p>
+                            <p class="mt-1 text-sm text-gray-500">Order total: <strong class="text-gray-900">₱{{ number_format($order->total_amount, 2) }}</strong></p>
                         </div>
 
                         <div class="space-y-4">
@@ -432,3 +453,4 @@
     </template>
 </div>
 @endsection
+

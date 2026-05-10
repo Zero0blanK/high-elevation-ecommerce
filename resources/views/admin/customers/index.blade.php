@@ -43,20 +43,26 @@
                         </svg>
                     </div>
                     <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Name, email, phone…"
-                           class="block w-full pl-9 rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm">
+                           class="block w-full pl-9 pr-3 py-2 rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm">
                 </div>
             </div>
-            <div>
+            <div class="relative">
                 <label for="is_active" class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Status</label>
-                <select name="is_active" id="is_active" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm">
+                <svg class="absolute right-3 top-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+                <select name="is_active" id="is_active" class="block w-full rounded-lg py-2 px-3 appearance-none shadow-sm border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                     <option value="">All Statuses</option>
                     <option value="1" @selected(request('is_active') === '1')>Active</option>
                     <option value="0" @selected(request('is_active') === '0')>Inactive</option>
                 </select>
             </div>
-            <div>
+            <div class="relative">
                 <label for="has_orders" class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Orders</label>
-                <select name="has_orders" id="has_orders" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm">
+                <svg class="absolute right-3 top-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+                <select name="has_orders" id="has_orders" class="block w-full rounded-lg py-2 px-3 appearance-none border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm">
                     <option value="">All Customers</option>
                     <option value="yes" @selected(request('has_orders') === 'yes')>With Orders</option>
                     <option value="no" @selected(request('has_orders') === 'no')>Without Orders</option>

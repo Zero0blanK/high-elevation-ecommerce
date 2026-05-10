@@ -34,16 +34,16 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" x-data="{ activeImage: 0 }">
                 @if($product->images->count())
                     <div class="mb-4">
-                        <img :src="document.querySelectorAll('[data-gallery-src]')[activeImage]?.dataset.gallerySrc || '{{ asset('storage/' . $product->images->first()->image_url) }}'"
+                        <img :src="document.querySelectorAll('[data-gallery-src]')[activeImage]?.dataset.gallerySrc || '{{ asset($product->images->first()->image_url ?? '') }}'"
                              class="w-full h-80 object-cover rounded-xl" alt="{{ $product->name }}">
                     </div>
                     @if($product->images->count() > 1)
                         <div class="grid grid-cols-5 gap-3">
                             @foreach($product->images as $index => $image)
-                                <button @click="activeImage = {{ $index }}" data-gallery-src="{{ asset('storage/' . $image->image_url) }}"
+                                <button @click="activeImage = {{ $index }}" data-gallery-src="{{ asset($image->image_url ?? '') }}"
                                         class="aspect-square rounded-lg overflow-hidden border-2 transition-all focus:outline-none"
                                         :class="activeImage === {{ $index }} ? 'border-amber-500 ring-2 ring-amber-200' : 'border-transparent hover:border-gray-300'">
-                                    <img src="{{ asset('storage/' . $image->image_url) }}" alt="{{ $image->alt_text ?? $product->name }}" class="h-full w-full object-cover">
+                                    <img src="{{ asset($image->image_url ?? '') }}" alt="{{ $image->alt_text ?? $product->name }}" class="h-full w-full object-cover">
                                 </button>
                             @endforeach
                         </div>
@@ -214,16 +214,16 @@
                         <span class="text-gray-900 font-medium">{{ $product->low_stock_threshold ?? '—' }}</span>
                     </div>
                     {{-- Quick Stock Update --}}
-                    <div class="pt-3 border-t border-gray-100">
+                    {{-- <div class="pt-3 border-t border-gray-100">
                         <form method="POST" action="{{ route('admin.products.update-stock', $product) }}" class="flex items-center gap-2">
                             @csrf
                             @method('PATCH')
-                            <input type="number" name="stock_quantity" value="{{ $product->stock_quantity }}" min="0" class="flex-1 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm text-sm">
+                            <input type="number" name="stock_quantity" value="{{ $product->stock_quantity }}" min="0" class="flex-1 py-2 pl-4 pr-2 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm text-sm">
                             <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-3 py-2 rounded-lg transition-colors text-sm">
                                 Update
                             </button>
                         </form>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
 

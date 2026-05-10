@@ -22,13 +22,14 @@
                 <div>
                     <div class="flex items-center gap-3">
                         <h1 class="text-2xl font-bold text-gray-900">{{ $category->name }}</h1>
-                    @if($category->is_active)
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">Active</span>
-                    @else
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Inactive</span>
-                    @endif
+                        @if($category->is_active)
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">Active</span>
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Inactive</span>
+                        @endif
+                    </div>
+                    <p class="text-sm text-gray-500">{{ $category->slug }}</p>
                 </div>
-                <p class="text-sm text-gray-500">{{ $category->slug }}</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -224,9 +225,9 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <p class="text-sm font-medium text-gray-900">${{ number_format($product->price, 2) }}</p>
+                                    <p class="text-sm font-medium text-gray-900">₱{{ number_format($product->price, 2) }}</p>
                                     @if($product->sale_price)
-                                        <p class="text-xs text-green-600">${{ number_format($product->sale_price, 2) }}</p>
+                                        <p class="text-xs text-green-600">₱{{ number_format($product->sale_price, 2) }}</p>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-center whitespace-nowrap">
@@ -295,3 +296,4 @@
     </template>
 </div>
 @endsection
+

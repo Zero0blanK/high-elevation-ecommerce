@@ -114,11 +114,11 @@
                         <div>
                             <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                             <input type="tel" name="phone" id="phone"
-                                   pattern="[0-9]*" inputmode="numeric" title="Numbers only"
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                   title="International format (e.g., +639123456789)"
                                    value="{{ old('phone', $customer->phone) }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                                    :class="{ 'border-red-500': formErrors.phone }">
+                            <p class="mt-1 text-xs text-gray-500">International format supported (e.g., +639123456789)</p>
                         </div>
                         <div>
                             <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
@@ -137,77 +137,7 @@
             </div>
 
             <!-- Change Password Section -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-6" x-data="{
-                showPassword: false,
-                passwordFormErrors: {},
-                isPasswordSubmitting: false,
-                handlePasswordSubmit() {
-                    this.isPasswordSubmitting = true;
-                    this.passwordFormErrors = {};
-                    const form = event.target;
-                    const submitBtn = form.querySelector('button[type=\'submit\']');
-                    const originalBtnText = submitBtn.innerHTML;
-                    submitBtn.innerHTML = '<svg class=\'animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block\' fill=\'none\' viewBox=\'0 0 24 24\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg> Updating...';
-                    submitBtn.disabled = true;
-                    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid', 'border-red-500'));
-                    form.querySelectorAll('.error-message').forEach(el => el.remove());
-                    fetch(form.action, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content, 'Accept': 'application/json' },
-                        body: JSON.stringify(Object.fromEntries(new FormData(form)))
-                    })
-                    .then(response => { if (!response.ok) return response.json().then(d => Promise.reject(d)); return response.json(); })
-                    .then(data => {
-                        if (data.success) {
-                            const el = document.createElement('div');
-                            el.className = 'mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm';
-                            el.textContent = data.message || 'Password updated successfully!';
-                            form.insertBefore(el, form.firstChild);
-                            form.reset();
-                            setTimeout(() => el.remove(), 3000);
-                        } else {
-                            this.passwordFormErrors = data.errors || {};
-                            Object.keys(this.passwordFormErrors).forEach(field => {
-                                const input = form.querySelector(`[name='${field}']`);
-                                if (input) {
-                                    input.classList.add('is-invalid', 'border-red-500');
-                                    const err = document.createElement('p');
-                                    err.className = 'mt-1 text-xs text-red-600 error-message';
-                                    err.textContent = this.passwordFormErrors[field][0];
-                                    input.parentNode.insertBefore(err, input.nextSibling);
-                                }
-                            });
-                            if (Object.keys(this.passwordFormErrors).length === 0) {
-                                const el = document.createElement('div');
-                                el.className = 'mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm';
-                                el.textContent = data.message || 'Failed to update password.';
-                                form.insertBefore(el, form.firstChild);
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        if (error && error.errors) {
-                            this.passwordFormErrors = error.errors;
-                            Object.keys(this.passwordFormErrors).forEach(field => {
-                                const input = form.querySelector(`[name='${field}']`);
-                                if (input) {
-                                    input.classList.add('is-invalid', 'border-red-500');
-                                    const err = document.createElement('p');
-                                    err.className = 'mt-1 text-xs text-red-600 error-message';
-                                    err.textContent = this.passwordFormErrors[field][0];
-                                    input.parentNode.insertBefore(err, input.nextSibling);
-                                }
-                            });
-                        } else {
-                            const el = document.createElement('div');
-                            el.className = 'mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm';
-                            el.textContent = error.message || 'An unexpected error occurred.';
-                            form.insertBefore(el, form.firstChild);
-                        }
-                    })
-                    .finally(() => { this.isPasswordSubmitting = false; submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; });
-                }
-            }">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-6" x-data="passwordChangeForm()">
                 <button @click="showPassword = !showPassword" type="button"
                         class="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                     <h2 class="text-lg font-semibold text-gray-900">Change Password</h2>
@@ -223,24 +153,54 @@
 
                         <div class="mt-5">
                             <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                            <input type="password" name="current_password" id="current_password" required minlength="8"
+                            <input type="password" name="current_password" id="current_password" required
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                                    :class="{ 'border-red-500': passwordFormErrors.current_password }">
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div>
-                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                                <input type="password" name="password" id="password" required minlength="8"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                                       :class="{ 'border-red-500': passwordFormErrors.password }">
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <input type="password" name="password" id="password" required minlength="8"
+                                   x-model="newPassword"
+                                   @input="checkPassword($event.target.value)"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                   :class="{ 'border-red-500': passwordFormErrors.password }">
+                            <!-- Password Requirements Checklist -->
+                            <div class="mt-2 space-y-1" x-show="newPassword.length > 0" x-cloak>
+                                <div class="flex items-center gap-2 text-xs" :class="pwdChecks.length ? 'text-green-600' : 'text-gray-500'">
+                                    <svg x-show="pwdChecks.length" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <svg x-show="!pwdChecks.length" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                                    <span>At least 8 characters</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs" :class="pwdChecks.upper ? 'text-green-600' : 'text-gray-500'">
+                                    <svg x-show="pwdChecks.upper" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <svg x-show="!pwdChecks.upper" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                                    <span>1 uppercase letter (A-Z)</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs" :class="pwdChecks.lower ? 'text-green-600' : 'text-gray-500'">
+                                    <svg x-show="pwdChecks.lower" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <svg x-show="!pwdChecks.lower" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                                    <span>1 lowercase letter (a-z)</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs" :class="pwdChecks.number ? 'text-green-600' : 'text-gray-500'">
+                                    <svg x-show="pwdChecks.number" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <svg x-show="!pwdChecks.number" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                                    <span>1 number (0-9)</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs" :class="pwdChecks.symbol ? 'text-green-600' : 'text-gray-500'">
+                                    <svg x-show="pwdChecks.symbol" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <svg x-show="!pwdChecks.symbol" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                                    <span>1 special character (!@#$%^&*)</span>
+                                </div>
                             </div>
-                            <div>
-                                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                                <input type="password" name="password_confirmation" id="password_confirmation" required minlength="8"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                                       :class="{ 'border-red-500': passwordFormErrors.password_confirmation }">
-                            </div>
+                            <p x-show="newPassword.length === 0" class="mt-1 text-xs text-gray-500">Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 symbol</p>
+                        </div>
+                        
+                        <div>
+                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                            <input type="password" name="password_confirmation" id="password_confirmation" required minlength="8"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                   :class="{ 'border-red-500': passwordFormErrors.password_confirmation }">
                         </div>
 
                         <div class="flex justify-end pt-2">
@@ -254,4 +214,110 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+function passwordChangeForm() {
+    return {
+        showPassword: false,
+        passwordFormErrors: {},
+        isPasswordSubmitting: false,
+        newPassword: '',
+        pwdChecks: { length: false, upper: false, lower: false, number: false, symbol: false },
+        
+        checkPassword(pwd) {
+            this.newPassword = pwd;
+            this.pwdChecks = {
+                length: pwd.length >= 8,
+                upper: /[A-Z]/.test(pwd),
+                lower: /[a-z]/.test(pwd),
+                number: /\d/.test(pwd),
+                symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(pwd)
+            };
+        },
+        
+        get passwordValid() {
+            return this.pwdChecks.length && this.pwdChecks.upper && this.pwdChecks.lower && this.pwdChecks.number && this.pwdChecks.symbol;
+        },
+        
+        handlePasswordSubmit() {
+            this.isPasswordSubmitting = true;
+            this.passwordFormErrors = {};
+            const form = event.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Updating...';
+            submitBtn.disabled = true;
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid', 'border-red-500'));
+            form.querySelectorAll('.error-message').forEach(el => el.remove());
+            
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 
+                    'Accept': 'application/json' 
+                },
+                body: JSON.stringify(Object.fromEntries(new FormData(form)))
+            })
+            .then(response => { 
+                if (!response.ok) return response.json().then(d => Promise.reject(d)); 
+                return response.json(); 
+            })
+            .then(data => {
+                if (data.success) {
+                    const el = document.createElement('div');
+                    el.className = 'mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm';
+                    el.textContent = data.message || 'Password updated successfully!';
+                    form.insertBefore(el, form.firstChild);
+                    form.reset();
+                    this.newPassword = '';
+                    this.pwdChecks = { length: false, upper: false, lower: false, number: false, symbol: false };
+                    setTimeout(() => el.remove(), 3000);
+                } else {
+                    this.passwordFormErrors = data.errors || {};
+                    this.showFieldErrors(form);
+                    if (Object.keys(this.passwordFormErrors).length === 0) {
+                        this.showGeneralError(form, data.message || 'Failed to update password.');
+                    }
+                }
+            })
+            .catch(error => {
+                if (error && error.errors) {
+                    this.passwordFormErrors = error.errors;
+                    this.showFieldErrors(form);
+                } else {
+                    this.showGeneralError(form, error.message || 'An unexpected error occurred.');
+                }
+            })
+            .finally(() => { 
+                this.isPasswordSubmitting = false; 
+                submitBtn.disabled = false; 
+                submitBtn.innerHTML = originalBtnText; 
+            });
+        },
+        
+        showFieldErrors(form) {
+            Object.keys(this.passwordFormErrors).forEach(field => {
+                const input = form.querySelector(`[name="${field}"]`);
+                if (input) {
+                    input.classList.add('is-invalid', 'border-red-500');
+                    const err = document.createElement('p');
+                    err.className = 'mt-1 text-xs text-red-600 error-message';
+                    err.textContent = this.passwordFormErrors[field][0];
+                    input.parentNode.insertBefore(err, input.nextSibling);
+                }
+            });
+        },
+        
+        showGeneralError(form, message) {
+            const el = document.createElement('div');
+            el.className = 'mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm';
+            el.textContent = message;
+            form.insertBefore(el, form.firstChild);
+        }
+    };
+}
+</script>
+@endpush
 @endsection

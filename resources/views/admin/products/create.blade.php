@@ -26,17 +26,17 @@
                     <div class="space-y-5">
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Product Name <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" id="name" value="{{ old('name') }}" required placeholder="Enter product name" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="text" name="name" id="name" value="{{ old('name') }}" required placeholder="Enter product name" class="block w-full border-gray-300 rounded-lg py-2 px-3 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             @error('name') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU <span class="text-red-500">*</span></label>
-                            <input type="text" name="sku" id="sku" value="{{ old('sku') }}" required placeholder="e.g. HE-COF-001" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="text" name="sku" id="sku" value="{{ old('sku') }}" required placeholder="e.g. HE-COF-001" class="block w-full border-gray-300 rounded-lg py-2 px-3 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             @error('sku') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea name="description" id="description" rows="5" placeholder="Describe your product..." class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">{{ old('description') }}</textarea>
+                            <textarea name="description" id="description" rows="5" placeholder="Describe your product..." class="block w-full border-gray-300 rounded-lg py-2 px-3 focus:ring-amber-500 focus:border-amber-500 shadow-sm">{{ old('description') }}</textarea>
                             @error('description') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -46,9 +46,10 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-5">Coffee Details</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
+                        <div class="relative">
                             <label for="roast_level" class="block text-sm font-medium text-gray-700 mb-1">Roast Level</label>
-                            <select name="roast_level" id="roast_level" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <select name="roast_level" id="roast_level" class="block w-full border-gray-300 rounded-lg py-2 px-3 appearance-none focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                                 <option value="">Select roast level</option>
                                 <option value="light" @selected(old('roast_level') === 'light')>Light</option>
                                 <option value="medium" @selected(old('roast_level') === 'medium')>Medium</option>
@@ -57,9 +58,10 @@
                             </select>
                             @error('roast_level') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
-                        <div>
+                        <div class="relative">
                             <label for="grind_type" class="block text-sm font-medium text-gray-700 mb-1">Grind Type</label>
-                            <select name="grind_type" id="grind_type" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <select name="grind_type" id="grind_type" class="block w-full border-gray-300 rounded-lg py-2 px-3 appearance-none focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                                 <option value="">Select grind type</option>
                                 <option value="whole-bean" @selected(old('grind_type') === 'whole-bean')>Whole Bean</option>
                                 <option value="coarse" @selected(old('grind_type') === 'coarse')>Coarse</option>
@@ -71,12 +73,12 @@
                         </div>
                         <div>
                             <label for="origin" class="block text-sm font-medium text-gray-700 mb-1">Origin</label>
-                            <input type="text" name="origin" id="origin" value="{{ old('origin') }}" placeholder="e.g. Ethiopia, Colombia" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="text" name="origin" id="origin" value="{{ old('origin') }}" placeholder="e.g. Ethiopia, Colombia" class="block w-full border-gray-300 rounded-lg py-2 px-3 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             @error('origin') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div class="sm:col-span-2">
                             <label for="flavor_notes" class="block text-sm font-medium text-gray-700 mb-1">Flavor Notes</label>
-                            <textarea name="flavor_notes" id="flavor_notes" rows="2" placeholder="e.g. Chocolate, Citrus, Nutty" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">{{ old('flavor_notes') }}</textarea>
+                            <textarea name="flavor_notes" id="flavor_notes" rows="2" placeholder="e.g. Chocolate, Citrus, Nutty" class="block w-full border-gray-300 rounded-lg py-2 px-3 focus:ring-amber-500 focus:border-amber-500 shadow-sm">{{ old('flavor_notes') }}</textarea>
                             @error('flavor_notes') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -88,12 +90,12 @@
                     <div class="space-y-5">
                         <div>
                             <label for="meta_title" class="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
-                            <input type="text" name="meta_title" id="meta_title" value="{{ old('meta_title') }}" placeholder="SEO title for search engines" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="text" name="meta_title" id="meta_title" value="{{ old('meta_title') }}" placeholder="SEO title for search engines" class="block w-full border-gray-300 rounded-lg py-2 px-3 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             @error('meta_title') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="meta_description" class="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
-                            <textarea name="meta_description" id="meta_description" rows="2" placeholder="Brief description for search engine results" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">{{ old('meta_description') }}</textarea>
+                            <textarea name="meta_description" id="meta_description" rows="2" placeholder="Brief description for search engine results" class="block w-full border-gray-300 rounded-lg py-2 px-3 focus:ring-amber-500 focus:border-amber-500 shadow-sm">{{ old('meta_description') }}</textarea>
                             @error('meta_description') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -135,7 +137,7 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-500 sm:text-sm">₱</span>
                                 </div>
-                                <input type="number" name="price" id="price" value="{{ old('price') }}" step="0.01" min="0" required placeholder="0.00" class="block w-full pl-8 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                                <input type="number" name="price" id="price" value="{{ old('price') }}" step="0.01" min="0" required placeholder="0.00" class="block w-full pl-8 border-gray-300 rounded-lg py-2 pr-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             </div>
                             @error('price') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -145,7 +147,7 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-500 sm:text-sm">₱</span>
                                 </div>
-                                <input type="number" name="sale_price" id="sale_price" value="{{ old('sale_price') }}" step="0.01" min="0" placeholder="0.00" class="block w-full pl-8 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                                <input type="number" name="sale_price" id="sale_price" value="{{ old('sale_price') }}" step="0.01" min="0" placeholder="0.00" class="block w-full pl-8 border-gray-300 rounded-lg py-2 pr-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             </div>
                             <p class="mt-1 text-xs text-gray-400">Must be lower than regular price. Leave blank if no sale.</p>
                             @error('sale_price') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -156,7 +158,7 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-500 sm:text-sm">₱</span>
                                 </div>
-                                <input type="number" name="cost_price" id="cost_price" value="{{ old('cost_price') }}" step="0.01" min="0" placeholder="0.00" class="block w-full pl-8 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                                <input type="number" name="cost_price" id="cost_price" value="{{ old('cost_price') }}" step="0.01" min="0" placeholder="0.00" class="block w-full pl-8 border-gray-300 rounded-lg py-2 pr-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             </div>
                             @error('cost_price') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -169,13 +171,13 @@
                     <div class="space-y-4">
                         <div>
                             <label for="low_stock_threshold" class="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
-                            <input type="number" name="low_stock_threshold" id="low_stock_threshold" value="{{ old('low_stock_threshold', 10) }}" min="0" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="number" name="low_stock_threshold" id="low_stock_threshold" value="{{ old('low_stock_threshold', 10) }}" min="0" class="block w-full border-gray-300 rounded-lg py-2 pr-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             <p class="mt-1 text-xs text-gray-500">Stock starts at 0. Use Inventory &gt; Stock In to add stock.</p>
                             @error('low_stock_threshold') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Weight (g)</label>
-                            <input type="number" name="weight" id="weight" value="{{ old('weight') }}" step="0.01" min="0" placeholder="0.00" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="number" name="weight" id="weight" value="{{ old('weight') }}" step="0.01" min="0" placeholder="0.00" class="block w-full border-gray-300 rounded-lg py-2 pr-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             @error('weight') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -184,9 +186,10 @@
                 {{-- Category --}}
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-5">Category</h2>
-                    <div>
+                    <div class="relative">
                         <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Select Category <span class="text-red-500">*</span></label>
-                        <select name="category_id" id="category_id" required class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                        <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <select name="category_id" id="category_id" required class="block w-full border-gray-300 rounded-lg py-2 px-3 appearance-none focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             <option value="">Choose a category</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>

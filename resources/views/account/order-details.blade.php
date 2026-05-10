@@ -95,15 +95,24 @@
                         @endforeach
                     </div>
 
-                    @if($order->tracking_number && $order->status === 'shipped')
+                    @if($order->tracking_number)
                         <div class="mt-5 p-3 bg-blue-50 rounded-lg border border-blue-200 text-sm">
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between gap-3">
                                 <div>
                                     <span class="text-blue-800 font-medium">Tracking:</span>
                                     <span class="text-blue-900 font-mono ml-1">{{ $order->tracking_number }}</span>
                                 </div>
+                                @if($order->shipping_method || $order->status === 'shipped' || $order->status === 'delivered')
+                                    <button type="button"
+                                            onclick="trackPackage('{{ $order->tracking_number }}', '{{ $order->shipping_method ?? 'standard' }}', this)"
+                                            class="text-xs font-medium text-blue-700 hover:text-blue-800 px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors">
+                                        Track Package
+                                    </button>
+                                @endif
                                 @if($order->shipping_method)
-                                    <span class="text-blue-700">{{ ucfirst($order->shipping_method) }}</span>
+                                    <span class="text-blue-700">
+                                        {{ $order->shipping_method === 'jnt' ? 'J&T Express' : ($order->shipping_method === 'lbc' ? 'LBC Express' : strtoupper($order->shipping_method)) }}
+                                    </span>
                                 @endif
                             </div>
                         </div>
@@ -130,9 +139,9 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h3 class="text-sm font-medium text-gray-900">{{ $item->product_name ?? ($item->product->name ?? 'Product not found') }}</h3>
-                                <p class="text-xs text-gray-500 mt-0.5">Qty: {{ $item->quantity }} × ${{ number_format($item->unit_price, 2) }}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Qty: {{ $item->quantity }} × ₱{{ number_format($item->unit_price, 2) }}</p>
                             </div>
-                            <p class="text-sm font-semibold text-gray-900">${{ number_format($item->total_price, 2) }}</p>
+                            <p class="text-sm font-semibold text-gray-900">₱{{ number_format($item->total_price, 2) }}</p>
                         </div>
                     @empty
                         <div class="p-8 text-center text-sm text-gray-500">No items found</div>
@@ -145,30 +154,30 @@
                         @if(isset($order->subtotal))
                             <div class="flex justify-between text-sm text-gray-600">
                                 <span>Subtotal</span>
-                                <span>${{ number_format($order->subtotal, 2) }}</span>
+                                <span>₱{{ number_format($order->subtotal, 2) }}</span>
                             </div>
                         @endif
                         @if(isset($order->tax_amount) && $order->tax_amount > 0)
                             <div class="flex justify-between text-sm text-gray-600">
                                 <span>Tax</span>
-                                <span>${{ number_format($order->tax_amount, 2) }}</span>
+                                <span>₱{{ number_format($order->tax_amount, 2) }}</span>
                             </div>
                         @endif
                         @if(isset($order->shipping_amount))
                             <div class="flex justify-between text-sm text-gray-600">
                                 <span>Shipping</span>
-                                <span>${{ number_format($order->shipping_amount, 2) }}</span>
+                                <span>₱{{ number_format($order->shipping_amount, 2) }}</span>
                             </div>
                         @endif
                         @if(isset($order->discount_amount) && $order->discount_amount > 0)
                             <div class="flex justify-between text-sm text-green-600">
                                 <span>Discount</span>
-                                <span>-${{ number_format($order->discount_amount, 2) }}</span>
+                                <span>-₱{{ number_format($order->discount_amount, 2) }}</span>
                             </div>
                         @endif
                         <div class="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
                             <span>Total</span>
-                            <span>${{ number_format($order->total_amount, 2) }}</span>
+                            <span>₱{{ number_format($order->total_amount, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -232,8 +241,8 @@
 
 @push('scripts')
 <script>
-function trackPackage(trackingNumber, provider) {
-    const button = event.target;
+function trackPackage(trackingNumber, provider, buttonEl = null) {
+    const button = buttonEl || event.target;
     const originalText = button.textContent;
     button.textContent = 'Tracking...';
     button.disabled = true;
@@ -262,10 +271,18 @@ function showTrackingModal(trackingData) {
                 <div class="mb-4 p-4 bg-blue-50 rounded-lg text-sm">
                     <div class="grid grid-cols-2 gap-3">
                         <div><span class="font-medium text-blue-800">Tracking:</span> <span class="text-blue-900 font-mono">${trackingData.tracking_number}</span></div>
-                        <div><span class="font-medium text-blue-800">Provider:</span> <span class="text-blue-900">${trackingData.provider.toUpperCase()}</span></div>
+                        <div><span class="font-medium text-blue-800">Provider:</span> <span class="text-blue-900">${trackingData.provider}</span></div>
                         <div><span class="font-medium text-blue-800">Status:</span> <span class="text-blue-900">${trackingData.status}</span></div>
                         <div><span class="font-medium text-blue-800">Est. Delivery:</span> <span class="text-blue-900">${trackingData.estimated_delivery}</span></div>
                     </div>
+                    ${trackingData.tracking_url ? `
+                        <div class="mt-3">
+                            <a href="${trackingData.tracking_url}" target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center text-xs font-medium text-blue-700 hover:text-blue-900 underline">
+                                Open official courier tracking page
+                            </a>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="space-y-3">
                     <h4 class="font-medium text-gray-900 text-sm">Tracking History</h4>
@@ -291,3 +308,4 @@ function showTrackingModal(trackingData) {
 @endpush
 
 @endsection
+

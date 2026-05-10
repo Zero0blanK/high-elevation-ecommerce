@@ -74,27 +74,33 @@
         <form action="{{ route('admin.analytics.export') }}" method="POST" class="px-6 py-6">
             @csrf
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                <div>
+                <div class="relative">
                     <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
-                    <select name="type" id="type" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                    <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <select name="type" id="type" class="block w-full py-2 px-3 appearance-none border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                         <option value="sales">Sales</option>
                         <option value="customers">Customers</option>
                         <option value="inventory">Inventory</option>
                     </select>
                 </div>
-                <div>
+                <div class="relative">
                     <label for="format" class="block text-sm font-medium text-gray-700 mb-1">Format</label>
-                    <select name="format" id="format" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                    <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <select name="format" id="format" class="block w-full py-2 px-3 appearance-none border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                         <option value="csv">CSV</option>
                     </select>
                 </div>
                 <div>
                     <label for="export_period_start" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                    <input type="date" name="period_start" id="export_period_start" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                    <input type="date" name="period_start" id="export_period_start" class="block w-full py-2 pl-3 pr-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                 </div>
                 <div>
                     <label for="export_period_end" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                    <input type="date" name="period_end" id="export_period_end" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                    <input type="date" name="period_end" id="export_period_end" class="block w-full py-2 pl-3 pr-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                 </div>
                 <div>
                     <button type="submit" class="w-full inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition-colors">

@@ -95,8 +95,8 @@
                             <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
                             <select name="currency" id="currency"
                                     class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
-                                @foreach(['USD' => 'USD - US Dollar', 'EUR' => 'EUR - Euro', 'GBP' => 'GBP - British Pound', 'PHP' => 'PHP - Philippine Peso', 'JPY' => 'JPY - Japanese Yen', 'AUD' => 'AUD - Australian Dollar', 'CAD' => 'CAD - Canadian Dollar'] as $code => $label)
-                                    <option value="{{ $code }}" {{ ($settings['general']['currency'] ?? 'USD') == $code ? 'selected' : '' }}>{{ $label }}</option>
+                                @foreach(['PHP' => 'PHP - Philippine Peso', 'USD' => 'USD - US Dollar', 'EUR' => 'EUR - Euro', 'GBP' => 'GBP - British Pound', 'JPY' => 'JPY - Japanese Yen', 'AUD' => 'AUD - Australian Dollar', 'CAD' => 'CAD - Canadian Dollar'] as $code => $label)
+                                    <option value="{{ $code }}" {{ ($settings['general']['currency'] ?? 'PHP') == $code ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('currency') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -192,33 +192,33 @@
                 @csrf
                 @method('PATCH')
                 <div class="px-6 py-6 space-y-8">
-                    {{-- Stripe --}}
+                    {{-- PayMongo --}}
                     <div class="rounded-lg border border-gray-200 p-5 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-50 text-indigo-600">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                                 </div>
-                                <h4 class="text-base font-semibold text-gray-900">Stripe</h4>
+                                <h4 class="text-base font-semibold text-gray-900">PayMongo</h4>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="hidden" name="stripe_enabled" value="0">
-                                <input type="checkbox" name="stripe_enabled" value="1" class="sr-only peer"
-                                       {{ ($settings['payment']['stripe_enabled'] ?? false) ? 'checked' : '' }}>
+                                <input type="hidden" name="paymongo_enabled" value="0">
+                                <input type="checkbox" name="paymongo_enabled" value="1" class="sr-only peer"
+                                       {{ ($settings['payment']['paymongo_enabled'] ?? false) ? 'checked' : '' }}>
                                 <div class="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
                             </label>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="stripe_public_key" class="block text-sm font-medium text-gray-700 mb-1">Public Key</label>
-                                <input type="text" name="stripe_public_key" id="stripe_public_key"
-                                       value="{{ old('stripe_public_key', $settings['payment']['stripe_public_key'] ?? '') }}"
+                                <label for="paymongo_public_key" class="block text-sm font-medium text-gray-700 mb-1">Public Key</label>
+                                <input type="text" name="paymongo_public_key" id="paymongo_public_key"
+                                       value="{{ old('paymongo_public_key', $settings['payment']['paymongo_public_key'] ?? '') }}"
                                        class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             </div>
                             <div>
-                                <label for="stripe_secret_key" class="block text-sm font-medium text-gray-700 mb-1">Secret Key</label>
-                                <input type="password" name="stripe_secret_key" id="stripe_secret_key"
-                                       value="{{ old('stripe_secret_key', $settings['payment']['stripe_secret_key'] ?? '') }}"
+                                <label for="paymongo_secret_key" class="block text-sm font-medium text-gray-700 mb-1">Secret Key</label>
+                                <input type="password" name="paymongo_secret_key" id="paymongo_secret_key"
+                                       value="{{ old('paymongo_secret_key', $settings['payment']['paymongo_secret_key'] ?? '') }}"
                                        class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             </div>
                         </div>

@@ -12,11 +12,14 @@
                 <label class="block text-xs font-medium text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Description, IP..."
-                       class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                       class="w-full rounded-lg py-2 px-3 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
             </div>
-            <div>
+            <div class="relative">
                 <label class="block text-xs font-medium text-gray-500 mb-1">Action</label>
-                <select name="action" class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                <svg class="absolute right-2.5 top-1/2 h-5 w-5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+                <select name="action" class="w-full rounded-lg py-2 px-3 appearance-none border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                     <option value="">All Actions</option>
                     @foreach($actions as $action)
                         <option value="{{ $action }}" {{ request('action') === $action ? 'selected' : '' }}>
@@ -25,9 +28,12 @@
                     @endforeach
                 </select>
             </div>
-            <div>
+            <div class="relative">
                 <label class="block text-xs font-medium text-gray-500 mb-1">Model</label>
-                <select name="model_type" class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                <svg class="absolute right-2.5 top-1/2 h-5 w-5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+                <select name="model_type" class="w-full rounded-lg py-2 px-3 appearance-none border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                     <option value="">All Models</option>
                     @foreach($modelTypes as $type)
                         <option value="{{ $type }}" {{ request('model_type') === $type ? 'selected' : '' }}>
@@ -39,12 +45,12 @@
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">Date From</label>
                 <input type="date" name="date_from" value="{{ request('date_from') }}"
-                       class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                       class="w-full rounded-lg pl-3 pr-2 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">Date To</label>
                 <input type="date" name="date_to" value="{{ request('date_to') }}"
-                       class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                       class="w-full rounded-lg pl-3 pr-2 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
             </div>
             <div class="flex items-end gap-2">
                 <button type="submit"

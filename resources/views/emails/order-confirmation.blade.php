@@ -23,7 +23,7 @@
                     </div>
                     <div>
                         <span class="text-gray-500">Total</span>
-                        <p class="font-semibold text-gray-900">${{ number_format($order->total_amount, 2) }}</p>
+                        <p class="font-semibold text-gray-900">₱{{ number_format($order->total_amount, 2) }}</p>
                     </div>
                     <div>
                         <span class="text-gray-500">Payment Status</span>
@@ -48,3 +48,4 @@
     </div>
 </div>
 @endsection
+

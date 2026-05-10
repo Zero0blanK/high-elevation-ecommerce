@@ -121,9 +121,10 @@
                                class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
                     </div>
                 </div>
-                <div class="min-w-[180px]">
+                <div class="min-w-[180px] relative">
                     <label for="stock_status" class="block text-sm font-medium text-gray-700 mb-1">Stock Status</label>
-                    <select name="stock_status" id="stock_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
+                    <svg class="absolute right-3 top-1/2 h-5 w-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <select name="stock_status" id="stock_status" class="w-full px-3 py-2 border border-gray-300 appearance-none rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
                         <option value="">All Statuses</option>
                         <option value="in_stock" {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
                         <option value="low_stock" {{ request('stock_status') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
@@ -168,7 +169,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     @if($product->images && $product->images->count() > 0)
-                                    <img src="{{ asset('storage/' . $product->images->first()->image_path) }}" alt="{{ $product->name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200 mr-3">
+                                    <img src="{{ asset($product->images->first()->image_url) }}" alt="{{ $product->name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200 mr-3">
                                     @else
                                     <div class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center mr-3">
                                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>

@@ -59,10 +59,10 @@
                                         @if($item->product->is_on_sale)
                                             <div class="flex items-center space-x-2 mt-1">
                                                 <span class="text-lg font-bold text-red-600">
-                                                    ${{ number_format($item->product->sale_price, 2) }}
+                                                    ₱{{ number_format($item->product->sale_price, 2) }}
                                                 </span>
                                                 <span class="text-sm text-gray-500 line-through">
-                                                    ${{ number_format($item->product->price, 2) }}
+                                                    ₱{{ number_format($item->product->price, 2) }}
                                                 </span>
                                                 <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
                                                     Sale
@@ -70,7 +70,7 @@
                                             </div>
                                         @else
                                             <p class="text-lg font-bold text-gray-900 mt-1">
-                                                ${{ number_format($item->product->price, 2) }}
+                                                ₱{{ number_format($item->product->price, 2) }}
                                             </p>
                                         @endif
                                     </div>
@@ -129,11 +129,11 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="text-lg font-semibold text-gray-900 item-subtotal" data-item-id="{{ $item->id }}">
-                                        ${{ number_format($item->total_price ?? (($item->product->is_on_sale ? $item->product->sale_price : $item->product->price) * $item->quantity), 2) }}
+                                        ₱{{ number_format($item->total_price ?? (($item->product->is_on_sale ? $item->product->sale_price : $item->product->price) * $item->quantity), 2) }}
                                     </p>
                                     @if($item->quantity > 1)
                                         <p class="text-xs text-gray-500">
-                                            ${{ number_format($item->product->is_on_sale ? $item->product->sale_price : $item->product->price, 2) }} each
+                                            ₱{{ number_format($item->product->is_on_sale ? $item->product->sale_price : $item->product->price, 2) }} each
                                         </p>
                                     @endif
                                 </div> 
@@ -164,7 +164,7 @@
                     <div class="space-y-3 mb-6">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Items (<span class="cart-items-count">{{ $cartItems->sum('quantity') }}</span>):</span>
-                            <span class="text-gray-900 cart-total">${{ number_format($total, 2) }}</span>
+                            <span class="text-gray-900 cart-total">₱{{ number_format($total, 2) }}</span>
                         </div>
                         
                         <div class="flex justify-between text-sm">
@@ -180,7 +180,7 @@
                         <div class="border-t pt-3">
                             <div class="flex justify-between">
                                 <span class="text-lg font-semibold text-gray-900">Total:</span>
-                                <span class="text-lg font-semibold text-gray-900">${{ number_format($total, 2) }}</span>
+                                <span class="text-lg font-semibold text-gray-900">₱{{ number_format($total, 2) }}</span>
                             </div>
                         </div>
                     </div>

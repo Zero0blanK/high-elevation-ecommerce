@@ -113,25 +113,25 @@
                     <h2 class="text-xl font-semibold text-gray-900 mb-6">Payment Method</h2>
                     
                     <div class="space-y-4">
-                        <!-- Credit Card via Stripe -->
-                        <label class="payment-method-option flex items-start space-x-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" data-method="credit_card">
-                            <input type="radio" name="payment_method" value="credit_card" class="mt-1 text-amber-600 focus:ring-amber-500" checked required>
+                        <!-- GCash via PayMongo -->
+                        <label class="payment-method-option flex items-start space-x-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" data-method="gcash">
+                            <input type="radio" name="payment_method" value="gcash" class="mt-1 text-amber-600 focus:ring-amber-500" checked required>
                             <div class="flex-1">
-                                <div class="font-medium text-gray-900">Credit / Debit Card</div>
-                                <div class="text-sm text-gray-600">Pay securely with your card via Stripe</div>
+                                <div class="font-medium text-gray-900">GCash</div>
+                                <div class="text-sm text-gray-600">Pay securely with GCash via PayMongo</div>
                             </div>
-                            <div class="flex space-x-2">
-                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">VISA</span>
-                                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">MC</span>
-                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">AMEX</span>
-                            </div>
+                            <span class="text-xs bg-teal-600 text-white px-2 py-1 rounded font-semibold">GCash</span>
                         </label>
 
-                        <!-- Stripe Card Element Container -->
-                        <div id="stripe-card-section" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div id="card-element" class="p-3 bg-white border border-gray-300 rounded-lg"></div>
-                            <div id="card-errors" class="mt-2 text-sm text-red-600"></div>
-                        </div>
+                        <!-- Credit / Debit Card via PayMongo -->
+                        <label class="payment-method-option flex items-start space-x-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" data-method="paymongo_card">
+                            <input type="radio" name="payment_method" value="paymongo_card" class="mt-1 text-amber-600 focus:ring-amber-500">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">Credit / Debit Card</div>
+                                <div class="text-sm text-gray-600">Pay with Visa or Mastercard via PayMongo</div>
+                            </div>
+                            <span class="text-xs bg-indigo-600 text-white px-2 py-1 rounded font-semibold">Card</span>
+                        </label>
 
                         <!-- PayPal -->
                         <label class="payment-method-option flex items-start space-x-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" data-method="paypal">
@@ -146,25 +146,15 @@
                         <!-- PayPal Button Container -->
                         <div id="paypal-button-container" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200"></div>
 
-                        <!-- GCash -->
-                        <label class="payment-method-option flex items-start space-x-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" data-method="gcash">
-                            <input type="radio" name="payment_method" value="gcash" class="mt-1 text-amber-600 focus:ring-amber-500">
-                            <div class="flex-1">
-                                <div class="font-medium text-gray-900">GCash</div>
-                                <div class="text-sm text-gray-600">Pay with your GCash wallet</div>
-                            </div>
-                            <span class="text-xs bg-blue-600 text-white px-2 py-1 rounded font-semibold">GCash</span>
-                        </label>
-
-                        <!-- GCash Info Section -->
-                        <div id="gcash-section" class="hidden mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <!-- PayMongo Info Section -->
+                        <div id="paymongo-section" class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                             <div class="flex items-center gap-3">
                                 <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                                 </svg>
                                 <div>
-                                    <p class="font-medium text-blue-800">GCash Payment</p>
-                                    <p class="text-sm text-blue-600">You will be redirected to GCash to complete your payment.</p>
+                                    <p id="paymongo-section-title" class="font-medium text-blue-800">GCash via PayMongo</p>
+                                    <p id="paymongo-section-description" class="text-sm text-blue-600">You will be redirected to PayMongo to complete your GCash payment securely.</p>
                                 </div>
                             </div>
                         </div>
@@ -190,7 +180,7 @@
                 <!-- Place Order Button (for non-PayPal methods) -->
                 <div id="standard-checkout-btn">
                     <button type="submit" id="submit-btn" class="w-full bg-amber-600 text-white py-4 px-6 rounded-lg hover:bg-amber-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2">
-                        <span id="submit-btn-text">Place Order - ${{ number_format($total, 2) }}</span>
+                        <span id="submit-btn-text">Place Order - ₱{{ number_format($total, 2) }}</span>
                         <svg id="submit-spinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -214,7 +204,7 @@
                                 <div class="font-medium text-gray-900 text-sm truncate">{{ $item->product->name }}</div>
                                 <div class="text-xs text-gray-600">Qty: {{ $item->quantity }}</div>
                             </div>
-                            <div class="font-medium text-gray-900 text-sm">${{ number_format(($item->product->is_on_sale ? $item->product->sale_price : $item->product->price) * $item->quantity, 2) }}</div>
+                            <div class="font-medium text-gray-900 text-sm">₱{{ number_format(($item->product->is_on_sale ? $item->product->sale_price : $item->product->price) * $item->quantity, 2) }}</div>
                         </div>
                     @endforeach
                 </div>
@@ -222,20 +212,20 @@
                 <div class="border-t border-gray-200 mt-6 pt-6 space-y-3">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">Subtotal</span>
-                        <span class="font-medium">${{ number_format($subtotal, 2) }}</span>
+                        <span class="font-medium">₱{{ number_format($subtotal, 2) }}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">Shipping</span>
-                        <span class="font-medium">{{ $shippingAmount > 0 ? '$' . number_format($shippingAmount, 2) : 'FREE' }}</span>
+                        <span class="font-medium">{{ $shippingAmount > 0 ? '₱' . number_format($shippingAmount, 2) : 'FREE' }}</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">Tax</span>
-                        <span class="font-medium">${{ number_format($taxAmount, 2) }}</span>
+                        <span class="font-medium">₱{{ number_format($taxAmount, 2) }}</span>
                     </div>
                     <div class="border-t pt-3">
                         <div class="flex justify-between text-lg font-bold">
                             <span>Total</span>
-                            <span class="text-amber-600">${{ number_format($total, 2) }}</span>
+                            <span class="text-amber-600">₱{{ number_format($total, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -359,54 +349,42 @@
 @endsection
 
 @push('scripts')
-<!-- Stripe JS -->
-<script src="https://js.stripe.com/v3/"></script>
-
 <!-- PayPal JS SDK -->
 @if(config('services.paypal.client_id'))
-<script src="https://www.paypal.com/sdk/js?client-id={{ config('services.paypal.client_id') }}&currency=USD"></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ config('services.paypal.client_id') }}&currency=PHP"></script>
 @endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Stripe
-    const stripeKey = '{{ config('services.stripe.key') }}';
-    let stripe, cardElement;
+    const paymentOptions = document.querySelectorAll('.payment-method-option');
+    const paymongoSection = document.getElementById('paymongo-section');
+    const paymongoSectionTitle = document.getElementById('paymongo-section-title');
+    const paymongoSectionDescription = document.getElementById('paymongo-section-description');
 
-    if (stripeKey && stripeKey.length > 0) {
-        try {
-            stripe = Stripe(stripeKey);
-            const elements = stripe.elements();
-            cardElement = elements.create('card', {
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#374151',
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                        '::placeholder': { color: '#9CA3AF' }
-                    },
-                    invalid: {
-                        color: '#dc2626',
-                    }
-                }
-            });
-            cardElement.mount('#card-element');
-            
-            cardElement.on('change', function(event) {
-                const displayError = document.getElementById('card-errors');
-                displayError.textContent = event.error ? event.error.message : '';
-            });
-            
-            // Store for form submission
-            window.stripeInstance = stripe;
-            window.cardElementInstance = cardElement;
-        } catch (e) {
-            console.error('Stripe initialization error:', e);
-            document.getElementById('stripe-card-section').innerHTML = '<p class="text-red-600 p-4">Credit card payment is currently unavailable. Please use another payment method.</p>';
+    const setActivePaymentMethod = (method) => {
+        paymentOptions.forEach(option => {
+            const radio = option.querySelector('input[name="payment_method"]');
+            const isActive = radio?.value === method;
+            option.classList.toggle('border-amber-500', isActive);
+            option.classList.toggle('bg-amber-50', isActive);
+            option.classList.toggle('border-gray-200', !isActive);
+        });
+    };
+
+    const updatePayMongoSection = (method) => {
+        if (!paymongoSectionTitle || !paymongoSectionDescription) {
+            return;
         }
-    } else {
-        document.getElementById('stripe-card-section').innerHTML = '<p class="text-amber-600 p-4">Credit card payment is not configured. Please use another payment method or contact support.</p>';
-    }
+
+        if (method === 'paymongo_card') {
+            paymongoSectionTitle.textContent = 'Credit / Debit Card via PayMongo';
+            paymongoSectionDescription.textContent = 'You will be redirected to PayMongo to complete your card payment securely.';
+            return;
+        }
+
+        paymongoSectionTitle.textContent = 'GCash via PayMongo';
+        paymongoSectionDescription.textContent = 'You will be redirected to PayMongo to complete your GCash payment securely.';
+    };
 
     // Payment method switching
     document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
@@ -414,26 +392,45 @@ document.addEventListener('DOMContentLoaded', function() {
             const method = this.value;
             
             // Hide all payment sections
-            document.getElementById('stripe-card-section').classList.add('hidden');
             document.getElementById('paypal-button-container').classList.add('hidden');
-            document.getElementById('gcash-section').classList.add('hidden');
+            paymongoSection.classList.add('hidden');
             document.getElementById('standard-checkout-btn').classList.remove('hidden');
             
             // Show relevant section
-            if (method === 'credit_card') {
-                document.getElementById('stripe-card-section').classList.remove('hidden');
-            } else if (method === 'paypal') {
+            if (method === 'paypal') {
                 document.getElementById('paypal-button-container').classList.remove('hidden');
                 document.getElementById('standard-checkout-btn').classList.add('hidden');
                 initPayPalButtons();
-            } else if (method === 'gcash') {
-                document.getElementById('gcash-section').classList.remove('hidden');
+            } else if (method === 'gcash' || method === 'paymongo_card') {
+                paymongoSection.classList.remove('hidden');
+                updatePayMongoSection(method);
             }
+
+            setActivePaymentMethod(method);
         });
     });
 
-    // Initialize default state - show credit card section
-    document.getElementById('stripe-card-section').classList.remove('hidden');
+    // Initialize payment state
+    const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value ?? 'gcash';
+    if (selectedMethod === 'paypal') {
+        document.getElementById('paypal-button-container').classList.remove('hidden');
+        document.getElementById('standard-checkout-btn').classList.add('hidden');
+        initPayPalButtons();
+    } else if (selectedMethod === 'gcash' || selectedMethod === 'paymongo_card') {
+        paymongoSection.classList.remove('hidden');
+        updatePayMongoSection(selectedMethod);
+    }
+    setActivePaymentMethod(selectedMethod);
+
+    // Billing address toggle
+    const sameAsShippingCheckbox = document.getElementById('same-as-shipping');
+    const billingAddressSection = document.getElementById('billing-address-section');
+    if (sameAsShippingCheckbox && billingAddressSection) {
+        billingAddressSection.style.display = sameAsShippingCheckbox.checked ? 'none' : 'block';
+        sameAsShippingCheckbox.addEventListener('change', function() {
+            billingAddressSection.style.display = this.checked ? 'none' : 'block';
+        });
+    }
 });
 
 // PayPal integration
@@ -505,11 +502,6 @@ function processPayPalOrder(paypalOrderId, details) {
         showNotification('An error occurred. Please try again.', 'error');
     });
 }
-
-// Billing address toggle
-document.getElementById('same-as-shipping').addEventListener('change', function() {
-    document.getElementById('billing-address-section').style.display = this.checked ? 'none' : 'block';
-});
 
 // Address Modal functions
 function openAddressModal(type) {
@@ -617,39 +609,13 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     btnText.textContent = 'Processing...';
     spinner.classList.remove('hidden');
     
-    // For Stripe card payments
-    if (paymentMethod === 'credit_card' && window.stripeInstance && window.cardElementInstance) {
-        window.stripeInstance.createPaymentMethod({
-            type: 'card',
-            card: window.cardElementInstance,
-        }).then(function(result) {
-            if (result.error) {
-                document.getElementById('card-errors').textContent = result.error.message;
-                resetSubmitButton();
-            } else {
-                submitOrder({
-                    shipping_address_id: shippingAddressId,
-                    billing_address_id: sameAsShipping ? shippingAddressId : billingAddressId,
-                    payment_method: paymentMethod,
-                    same_as_shipping: sameAsShipping,
-                    stripe_payment_method_id: result.paymentMethod.id,
-                    order_notes: document.querySelector('textarea[name="order_notes"]')?.value || ''
-                });
-            }
-        });
-    } else if (paymentMethod === 'credit_card') {
-        showNotification('Credit card payment is not available. Please use another payment method.', 'error');
-        resetSubmitButton();
-    } else {
-        // For GCash, COD, etc.
-        submitOrder({
-            shipping_address_id: shippingAddressId,
-            billing_address_id: sameAsShipping ? shippingAddressId : billingAddressId,
-            payment_method: paymentMethod,
-            same_as_shipping: sameAsShipping,
-            order_notes: document.querySelector('textarea[name="order_notes"]')?.value || ''
-        });
-    }
+    submitOrder({
+        shipping_address_id: shippingAddressId,
+        billing_address_id: sameAsShipping ? shippingAddressId : billingAddressId,
+        payment_method: paymentMethod,
+        same_as_shipping: sameAsShipping,
+        order_notes: document.querySelector('textarea[name="order_notes"]')?.value || ''
+    });
 });
 
 function submitOrder(orderData) {
@@ -665,7 +631,7 @@ function submitOrder(orderData) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // For GCash, redirect to payment URL if provided
+            // For redirect-based payments (e.g., PayMongo), redirect to payment URL if provided
             if (data.payment_url) {
                 window.location.href = data.payment_url;
             } else {
@@ -689,7 +655,7 @@ function resetSubmitButton() {
     const spinner = document.getElementById('submit-spinner');
     
     submitBtn.disabled = false;
-    btnText.textContent = 'Place Order - ${{ number_format($total, 2) }}';
+    btnText.textContent = 'Place Order - ₱{{ number_format($total, 2) }}';
     spinner.classList.add('hidden');
 }
 
@@ -713,3 +679,4 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 @endpush
+

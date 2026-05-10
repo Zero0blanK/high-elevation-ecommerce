@@ -48,7 +48,7 @@
                 </div>
                 <p class="text-sm font-medium text-gray-500">Total Sales</p>
             </div>
-            <p class="text-3xl font-bold text-gray-900">${{ number_format($data['total_sales'] ?? $data['total_revenue'] ?? 0, 2) }}</p>
+            <p class="text-3xl font-bold text-gray-900">₱{{ number_format($data['total_sales'] ?? $data['total_revenue'] ?? 0, 2) }}</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center gap-3 mb-3">
@@ -66,7 +66,7 @@
                 </div>
                 <p class="text-sm font-medium text-gray-500">Avg Order Value</p>
             </div>
-            <p class="text-3xl font-bold text-gray-900">${{ number_format($data['avg_order_value'] ?? $data['average_order_value'] ?? 0, 2) }}</p>
+            <p class="text-3xl font-bold text-gray-900">₱{{ number_format($data['avg_order_value'] ?? $data['average_order_value'] ?? 0, 2) }}</p>
         </div>
     </div>
 
@@ -100,7 +100,7 @@
                         <td class="px-6 py-4 text-sm text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $product['name'] ?? 'N/A' }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ number_format($product['total_sold'] ?? 0) }}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${{ number_format($product['revenue'] ?? 0, 2) }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">₱{{ number_format($product['revenue'] ?? 0, 2) }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -151,3 +151,4 @@ document.addEventListener('DOMContentLoaded', function() {
 @endpush
 @endif
 @endsection
+

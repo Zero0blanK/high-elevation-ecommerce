@@ -33,29 +33,32 @@
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
-                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Name, SKU, description…" class="block w-full pl-9 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Name, SKU, description…" class="block w-full pl-9 py-2 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
                 </div>
             </div>
-            <div>
+            <div class="relative">
                 <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select name="category" id="category" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
+                <svg class="absolute right-2.5 top-8 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <select name="category" id="category" class="block w-full py-2 px-3 appearance-none border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
                     <option value="">All Categories</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" @selected(request('category') == $category->id)>{{ $category->name }}</option>
+                    <option value="{{ $category->id }}" @selected(request('category') == $category->id)>{{ $category->name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div>
+            <div class="relative">
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" id="status" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
+                <svg class="absolute right-2.5 top-8 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <select name="status" id="status" class="block w-full px-3 py-2 appearance-none border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
                     <option value="">All</option>
                     <option value="active" @selected(request('status') === 'active')>Active</option>
                     <option value="inactive" @selected(request('status') === 'inactive')>Inactive</option>
                 </select>
             </div>
-            <div>
+            <div class="relative">
                 <label for="stock_status" class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-                <select name="stock_status" id="stock_status" class="block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
+                <svg class="absolute right-2.5 top-8 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <select name="stock_status" id="stock_status" class="block w-full px-3 py-2 appearance-none border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm">
                     <option value="">All</option>
                     <option value="in_stock" @selected(request('stock_status') === 'in_stock')>In Stock</option>
                     <option value="low_stock" @selected(request('stock_status') === 'low_stock')>Low Stock</option>
@@ -126,7 +129,7 @@
                                 <div class="flex items-center gap-3">
                                     <div class="h-10 w-10 flex-shrink-0">
                                         @if($product->primaryImage)
-                                            <img class="h-10 w-10 rounded-lg object-cover" src="{{ asset('storage/' . $product->primaryImage->image_url) }}" alt="{{ $product->name }}">
+                                            <img class="h-10 w-10 rounded-lg object-cover" src="{{ asset($product->primaryImage->image_url) }}" alt="{{ $product->name }}">
                                         @else
                                             <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
                                                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>

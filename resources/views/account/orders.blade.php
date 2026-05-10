@@ -102,7 +102,7 @@
                                     </div>
                                     <div class="flex items-center gap-3 text-sm">
                                         <span class="text-gray-500">{{ $order->created_at->format('M d, Y') }}</span>
-                                        <span class="font-semibold text-gray-900">${{ number_format($order->total_amount, 2) }}</span>
+                                        <span class="font-semibold text-gray-900">₱{{ number_format($order->total_amount, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -122,7 +122,7 @@
                                                 @if($item->product_variant) · {{ $item->product_variant }} @endif
                                             </p>
                                         </div>
-                                        <span class="text-sm font-medium text-gray-900">${{ number_format(($item->product->is_on_sale ? $item->product->sale_price : $item->product->price) * $item->quantity, 2) }}</span>
+                                        <span class="text-sm font-medium text-gray-900">₱{{ number_format(($item->product->is_on_sale ? $item->product->sale_price : $item->product->price) * $item->quantity, 2) }}</span>
                                     </div>
                                 @endforeach
 
@@ -133,13 +133,28 @@
 
                             <!-- Order Footer -->
                             <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 flex items-center justify-between">
-                                <span class="text-xs text-gray-500">{{ $order->items->sum('quantity') }} item(s)</span>
+                                <div class="text-xs text-gray-500">
+                                    <p>{{ $order->items->sum('quantity') }} item(s)</p>
+                                    @if($order->tracking_number)
+                                        <p class="mt-1">Tracking #: <span class="font-mono text-gray-700">{{ $order->tracking_number }}</span></p>
+                                        <p>
+                                            Courier:
+                                            <span class="font-medium text-gray-700">
+                                                {{ $order->shipping_method === 'jnt' ? 'J&T Express' : ($order->shipping_method === 'lbc' ? 'LBC Express' : 'N/A') }}
+                                            </span>
+                                        </p>
+                                    @endif
+                                </div>
                                 <div class="flex items-center gap-2">
-                                    @if($order->status === 'shipped' && $order->tracking_number)
-                                        <button onclick="trackOrder('{{ $order->tracking_number }}', '{{ $order->shipping_provider }}')"
-                                                class="text-xs font-medium text-amber-600 hover:text-amber-700 px-3 py-1.5 border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors">
+                                    @if($order->tracking_number && in_array($order->shipping_method, ['jnt', 'lbc']))
+                                        <a href="{{ $order->shipping_method === 'jnt'
+                                            ? 'https://www.jtexpress.ph/index/query/gzquery.html?billcode=' . urlencode($order->tracking_number)
+                                            : 'https://www.lbcexpress.com/track/?trackingNo=' . urlencode($order->tracking_number) }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           class="text-xs font-medium text-blue-700 hover:text-blue-800 px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors">
                                             Track Package
-                                        </button>
+                                        </a>
                                     @endif
                                     <a href="{{ route('orders.show', $order) }}"
                                        class="text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg transition-colors">
@@ -172,10 +187,5 @@
         </div>
     </div>
 </div>
-
-<script>
-function trackOrder(trackingNumber, provider) {
-    alert(`Tracking ${trackingNumber} via ${provider}\nIn a real application, this would open a tracking modal or redirect to the carrier's tracking page.`);
-}
-</script>
 @endsection
+

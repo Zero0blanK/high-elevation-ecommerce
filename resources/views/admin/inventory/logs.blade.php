@@ -30,16 +30,17 @@
                 <div class="min-w-[160px]">
                     <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
                     <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
+                           class="w-full pr-2 pl-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
                 </div>
                 <div class="min-w-[160px]">
                     <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
                     <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
+                           class="w-full pl-3 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
                 </div>
-                <div class="min-w-[160px]">
+                <div class="min-w-[160px] relative">
                     <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                    <select name="type" id="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
+                    <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <select name="type" id="type" class="w-full px-3 py-2 border appearance-none border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
                         <option value="">All Types</option>
                         <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>Sale</option>
                         <option value="restock" {{ request('type') == 'restock' ? 'selected' : '' }}>Restock</option>
@@ -47,9 +48,10 @@
                         <option value="return" {{ request('type') == 'return' ? 'selected' : '' }}>Return</option>
                     </select>
                 </div>
-                <div class="min-w-[200px]">
+                <div class="min-w-[200px] relative">
                     <label for="product_id" class="block text-sm font-medium text-gray-700 mb-1">Product</label>
-                    <select name="product_id" id="product_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
+                    <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <select name="product_id" id="product_id" class="w-full px-3 py-2 border appearance-none border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm">
                         <option value="">All Products</option>
                         @if(isset($products))
                         @foreach($products as $product)

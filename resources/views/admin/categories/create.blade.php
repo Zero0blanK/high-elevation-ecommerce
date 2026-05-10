@@ -42,7 +42,7 @@
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700">Name <span class="text-red-500">*</span></label>
                 <input type="text" name="name" id="name" x-model="name" required
-                       class="mt-1 block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('name') border-red-300 @enderror"
+                       class="mt-1 block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('name') border-red-300 @enderror"
                        placeholder="e.g. Single Origin Beans">
                 @error('name')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -53,7 +53,7 @@
             <div>
                 <label for="slug" class="block text-sm font-medium text-gray-700">Slug</label>
                 <input type="text" name="slug" id="slug" :value="slug" readonly
-                       class="mt-1 block w-full border-gray-300 rounded-lg bg-gray-50 shadow-sm sm:text-sm text-gray-500 cursor-not-allowed">
+                       class="mt-1 block w-full py-2 px-3 border-gray-300 rounded-lg bg-gray-50 shadow-sm sm:text-sm text-gray-500 cursor-not-allowed">
                 <p class="mt-1 text-xs text-gray-400">Auto-generated from the category name.</p>
             </div>
 
@@ -61,7 +61,7 @@
             <div>
                 <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
                 <textarea name="description" id="description" rows="3"
-                          class="mt-1 block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('description') border-red-300 @enderror"
+                          class="mt-1 block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('description') border-red-300 @enderror"
                           placeholder="Brief description of this category...">{{ old('description') }}</textarea>
                 @error('description')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -72,7 +72,7 @@
             <div>
                 <label for="parent_id" class="block text-sm font-medium text-gray-700">Parent Category</label>
                 <select name="parent_id" id="parent_id"
-                        class="mt-1 block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('parent_id') border-red-300 @enderror">
+                        class="mt-1 block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('parent_id') border-red-300 @enderror">
                     <option value="">None — Top Level</option>
                     @foreach($parentCategories as $parent)
                         <option value="{{ $parent->id }}" {{ old('parent_id') == $parent->id ? 'selected' : '' }}>{{ $parent->name }}</option>
@@ -88,7 +88,7 @@
                 <div>
                     <label for="sort_order" class="block text-sm font-medium text-gray-700">Sort Order</label>
                     <input type="number" name="sort_order" id="sort_order" value="{{ old('sort_order', 0) }}" min="0"
-                           class="mt-1 block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('sort_order') border-red-300 @enderror">
+                           class="mt-1 block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('sort_order') border-red-300 @enderror">
                     @error('sort_order')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -146,7 +146,7 @@
                 <div>
                     <label for="meta_title" class="block text-sm font-medium text-gray-700">Meta Title</label>
                     <input type="text" name="meta_title" id="meta_title" value="{{ old('meta_title') }}" maxlength="255"
-                           class="mt-1 block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('meta_title') border-red-300 @enderror"
+                           class="mt-1 block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('meta_title') border-red-300 @enderror"
                            placeholder="SEO-friendly title for this category">
                     @error('meta_title')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -155,7 +155,7 @@
                 <div>
                     <label for="meta_description" class="block text-sm font-medium text-gray-700">Meta Description</label>
                     <textarea name="meta_description" id="meta_description" rows="2" maxlength="500"
-                              class="mt-1 block w-full border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('meta_description') border-red-300 @enderror"
+                              class="mt-1 block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm sm:text-sm @error('meta_description') border-red-300 @enderror"
                               placeholder="Brief description for search engine results...">{{ old('meta_description') }}</textarea>
                     @error('meta_description')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -165,7 +165,7 @@
         </div>
 
         {{-- Actions --}}
-        <div class="flex items-center justify-end gap-3 pb-4">
+        <div class="flex items-center justify-end gap-3 pb-4 mt-2">
             <a href="{{ route('admin.categories.index') }}"
                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 Cancel

@@ -43,12 +43,12 @@
                                     {{ $item->product->name }}
                                 </p>
                                 <p class="text-xs text-gray-500">
-                                    Qty: {{ $item->quantity }} × ${{ number_format($item->product->discounted_price, 2) }}
+                                    Qty: {{ $item->quantity }} × ₱{{ number_format($item->product->discounted_price, 2) }}
                                 </p>
                             </div>
                             
                             <p class="text-sm font-semibold text-gray-900">
-                                ${{ number_format($item->subtotal, 2) }}
+                                ₱{{ number_format($item->subtotal, 2) }}
                             </p>
                         </div>
                     @endforeach
@@ -63,7 +63,7 @@
                 <div class="border-t pt-3 mt-3">
                     <div class="flex justify-between items-center mb-3">
                         <span class="font-semibold text-gray-900">Total:</span>
-                        <span class="font-semibold text-gray-900">${{ number_format($total, 2) }}</span>
+                        <span class="font-semibold text-gray-900">₱{{ number_format($total, 2) }}</span>
                     </div>
                     
                     <div class="space-y-2">

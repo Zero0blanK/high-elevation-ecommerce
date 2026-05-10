@@ -51,7 +51,7 @@
                         </div>
                         <div class="ml-4">
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Spent</p>
-                            <p class="text-2xl font-bold text-gray-900">${{ number_format($totalSpent, 2) }}</p>
+                            <p class="text-2xl font-bold text-gray-900">₱{{ number_format($totalSpent, 2) }}</p>
                         </div>
                     </div>
                 </div>
@@ -84,7 +84,7 @@
                         <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-semibold text-gray-900">Order #{{ $order->order_number }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">{{ $order->created_at->format('M j, Y') }} · ${{ number_format($order->total_amount, 2) }}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">{{ $order->created_at->format('M j, Y') }} · ₱{{ number_format($order->total_amount, 2) }}</p>
                             </div>
                             <div class="flex items-center gap-3 ml-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -122,3 +122,4 @@
     </div>
 </div>
 @endsection
+

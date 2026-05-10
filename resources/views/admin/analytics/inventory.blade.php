@@ -142,6 +142,50 @@
     </div>
     @endif
 
+    {{-- Product Breakdown / All Products --}}
+    @if(isset($data['top_selling_products']) && count($data['top_selling_products']) > 0)
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <h2 class="text-lg font-semibold text-gray-900">Product Breakdown (Top Sellers)</h2>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Sold</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock Value</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($data['top_selling_products'] as $product)
+                    @php
+                        $p = is_array($product) ? $product : (array) $product;
+                        $stock = $p['stock_quantity'] ?? 0;
+                        $price = $p['price'] ?? 0;
+                        $stockValue = $stock * $price;
+                    @endphp
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $p['name'] ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 font-mono">{{ $p['sku'] ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">₱{{ number_format($price, 2) }}</td>
+                        <td class="px-6 py-4 text-sm font-semibold {{ $stock == 0 ? 'text-red-600' : ($stock <= 10 ? 'text-amber-600' : 'text-green-600') }}">{{ $stock }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ number_format($p['total_sold'] ?? 0) }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">₱{{ number_format($stockValue, 2) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
     @else
     {{-- Empty State --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">

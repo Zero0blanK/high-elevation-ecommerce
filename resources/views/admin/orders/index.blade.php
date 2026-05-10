@@ -89,21 +89,23 @@
                     </span>
                     <input type="text" name="search" id="search" value="{{ request('search') }}"
                            placeholder="Order # or customer…"
-                           class="w-full rounded-lg border-gray-300 pl-9 text-sm focus:border-amber-500 focus:ring-amber-500">
+                           class="w-full rounded-lg pr-3 py-2 border border-gray-300 pl-9 text-sm focus:border-amber-500 focus:ring-amber-500">
                 </div>
             </div>
-            <div>
+            <div class="relative">
                 <label for="status" class="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" id="status" class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                <svg class="absolute right-2.5 top-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <select name="status" id="status" class="w-full rounded-lg appearance-none px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                     <option value="">All Statuses</option>
                     @foreach(['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as $status)
                         <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
                     @endforeach
                 </select>
             </div>
-            <div>
+            <div class="relative">
                 <label for="payment_status" class="block text-xs font-medium text-gray-700 mb-1">Payment Status</label>
-                <select name="payment_status" id="payment_status" class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                <svg class="absolute right-2.5 top-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <select name="payment_status" id="payment_status" class="w-full rounded-lg appearance-none px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                     <option value="">All Payments</option>
                     @foreach(['pending', 'paid', 'failed', 'refunded'] as $ps)
                         <option value="{{ $ps }}" {{ request('payment_status') === $ps ? 'selected' : '' }}>{{ ucfirst($ps) }}</option>
@@ -113,12 +115,12 @@
             <div>
                 <label for="date_from" class="block text-xs font-medium text-gray-700 mb-1">Date From</label>
                 <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}"
-                       class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                       class="w-full rounded-lg py-2 pl-3 pr-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
             </div>
             <div>
                 <label for="date_to" class="block text-xs font-medium text-gray-700 mb-1">Date To</label>
                 <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}"
-                       class="w-full rounded-lg border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                       class="w-full rounded-lg py-2 pl-3 pr-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
             </div>
             <div class="flex gap-2">
                 <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm">
@@ -144,6 +146,7 @@
                         <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</th>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                         <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tracking #</th>
                         <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -165,7 +168,7 @@
                                 {{ $order->items_count ?? $order->items->count() }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                                ${{ number_format($order->total_amount, 2) }}
+                                ₱{{ number_format($order->total_amount, 2) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 @php
@@ -182,6 +185,12 @@
                                     <span class="h-1.5 w-1.5 rounded-full {{ str_replace(['bg-yellow-100 text-yellow-800','bg-blue-100 text-blue-800','bg-purple-100 text-purple-800','bg-green-100 text-green-800','bg-red-100 text-red-800','bg-gray-100 text-gray-800'], ['bg-yellow-500','bg-blue-500','bg-purple-500','bg-green-500','bg-red-500','bg-gray-500'], $statusColors[$order->status] ?? 'bg-gray-500') }}"></span>
                                     {{ ucfirst($order->status) }}
                                 </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600">
+                                <p class="font-mono">{{ $order->tracking_number ?: '—' }}</p>
+                                <p class="mt-0.5">
+                                    {{ $order->shipping_method === 'jnt' ? 'J&T' : ($order->shipping_method === 'lbc' ? 'LBC' : '—') }}
+                                </p>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 @php
@@ -206,7 +215,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-16 text-center">
+                            <td colspan="9" class="px-6 py-16 text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
                                 </svg>
@@ -228,3 +237,4 @@
     @endif
 </div>
 @endsection
+
