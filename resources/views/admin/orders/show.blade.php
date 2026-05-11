@@ -27,7 +27,7 @@
     $billingAddr  = $order->addresses->first(fn($a) => ($a->type ?? $a->address_type ?? '') === 'billing');
 @endphp
 
-<div class="space-y-6" x-data="{ showRefundModal: false, selectedStatus: '{{ $order->status }}' }">
+<div class="space-y-6" x-data="{ showRefundModal: false, selectedStatus: @js(old('status', $order->status)) }">
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -46,6 +46,24 @@
             </span>
         </div>
     </div>
+
+    @if(session('success'))
+        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Please fix the highlighted fields and try again.
+        </div>
+    @endif
 
     {{-- Status Timeline --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -101,7 +119,13 @@
             </p>
             <p class="mt-1 text-xs {{ $order->shipping_method ? 'text-blue-700' : 'text-gray-500' }}">
                 Courier:
-                {{ $order->shipping_method === 'jnt' ? 'J&T Express' : ($order->shipping_method === 'lbc' ? 'LBC Express' : 'Not assigned yet') }}
+                {{
+                    $order->shipping_method === 'jnt'
+                        ? 'J&T Express'
+                        : ($order->shipping_method === 'lbc'
+                            ? 'LBC Express'
+                            : ($order->shipping_method ? strtoupper($order->shipping_method) : 'Not assigned yet'))
+                }}
             </p>
         </div>
     </div>
@@ -252,27 +276,38 @@
                         <select name="status" id="status" x-model="selectedStatus"
                                 class="w-full rounded-lg py-2 px-3 appearance-none border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                             @foreach(['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as $s)
-                                <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
+                                <option value="{{ $s }}" {{ old('status', $order->status) === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                             @endforeach
                         </select>
+                        @error('status')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div x-show="selectedStatus === 'shipped' || selectedStatus === 'delivered'" x-transition>
                         <label for="shipping_method" class="block text-sm font-medium text-gray-700 mb-1">Courier</label>
-                        <select name="shipping_method" id="shipping_method"
-                                class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500 mb-3">
-                            <option value="">Select courier</option>
-                            <option value="jnt" {{ $order->shipping_method === 'jnt' ? 'selected' : '' }}>J&T Express</option>
-                            <option value="lbc" {{ $order->shipping_method === 'lbc' ? 'selected' : '' }}>LBC Express</option>
-                        </select>
+                        <input type="text" name="shipping_method" id="shipping_method" list="courier-options"
+                               value="{{ old('shipping_method', $order->shipping_method) }}"
+                               placeholder="e.g. jnt, lbc, flash, ninjavan"
+                               class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500 mb-3">
+                        <datalist id="courier-options">
+                            <option value="jnt">J&T Express</option>
+                            <option value="lbc">LBC Express</option>
+                        </datalist>
+                        @error('shipping_method')
+                            <p class="-mt-2 mb-3 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                         <label for="tracking_number" class="block text-sm font-medium text-gray-700 mb-1">Tracking Number</label>
-                        <input type="text" name="tracking_number" id="tracking_number" value="{{ $order->tracking_number }}"
+                        <input type="text" name="tracking_number" id="tracking_number" value="{{ old('tracking_number', $order->tracking_number) }}"
                                placeholder="Enter tracking number"
                                class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
+                        @error('tracking_number')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                         <textarea name="notes" id="notes" rows="3" placeholder="Add a note about this status change…"
-                                  class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500"></textarea>
+                                  class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">{{ old('notes') }}</textarea>
                     </div>
                     <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm">
                         Update Status

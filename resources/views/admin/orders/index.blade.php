@@ -189,7 +189,13 @@
                             <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600">
                                 <p class="font-mono">{{ $order->tracking_number ?: '—' }}</p>
                                 <p class="mt-0.5">
-                                    {{ $order->shipping_method === 'jnt' ? 'J&T' : ($order->shipping_method === 'lbc' ? 'LBC' : '—') }}
+                                    {{
+                                        $order->shipping_method === 'jnt'
+                                            ? 'J&T'
+                                            : ($order->shipping_method === 'lbc'
+                                                ? 'LBC'
+                                                : ($order->shipping_method ? strtoupper($order->shipping_method) : '—'))
+                                    }}
                                 </p>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">

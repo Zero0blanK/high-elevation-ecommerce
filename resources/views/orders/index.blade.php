@@ -55,7 +55,7 @@
                                 <div class="flex items-center space-x-4">
                                     <div class="text-right">
                                         <p class="text-lg font-semibold text-gray-900">
-                                            ${{ number_format($order->total_amount, 2) }}
+                                            ₱{{ number_format($order->total_amount, 2) }}
                                         </p>
                                         <p class="text-sm text-gray-600">
                                             {{ $order->items->sum('quantity') }} item{{ $order->items->sum('quantity') > 1 ? 's' : '' }}
@@ -90,7 +90,7 @@
                                                 {{ $item->product ? $item->product->name : 'Product Unavailable' }}
                                             </p>
                                             <p class="text-sm text-gray-600">
-                                                Qty: {{ $item->quantity }} × ${{ number_format($item->price, 2) }}
+                                                Qty: {{ $item->quantity }} × ₱{{ number_format($item->price, 2) }}
                                             </p>
                                         </div>
                                     </div>
@@ -172,3 +172,4 @@
     </div>
 </div>
 @endsection
+

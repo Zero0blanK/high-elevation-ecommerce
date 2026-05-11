@@ -298,6 +298,7 @@
         </div>
     </footer>
 
+    @include('components.confirm-modal')
     @stack('scripts')
 </body>
 </html>

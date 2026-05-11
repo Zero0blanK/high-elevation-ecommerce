@@ -71,10 +71,10 @@
                                         <div class="mt-2 flex items-center justify-between">
                                             <div class="flex items-center space-x-4 text-sm text-gray-600">
                                                 <span>Quantity: {{ $item->quantity }}</span>
-                                                <span>Price: ${{ number_format($item->price, 2) }}</span>
+                                                <span>Price: ₱{{ number_format($item->price, 2) }}</span>
                                             </div>
                                             <div class="text-lg font-semibold text-gray-900">
-                                                ${{ number_format($item->quantity * $item->price, 2) }}
+                                                ₱{{ number_format($item->quantity * $item->price, 2) }}
                                             </div>
                                         </div>
                                     </div>
@@ -242,34 +242,34 @@
                         <div class="space-y-4">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Subtotal</span>
-                                <span class="text-gray-900">${{ number_format($order->subtotal, 2) }}</span>
+                                <span class="text-gray-900">₱{{ number_format($order->subtotal, 2) }}</span>
                             </div>
                             
                             @if($order->tax_amount > 0)
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Tax</span>
-                                    <span class="text-gray-900">${{ number_format($order->tax_amount, 2) }}</span>
+                                    <span class="text-gray-900">₱{{ number_format($order->tax_amount, 2) }}</span>
                                 </div>
                             @endif
                             
                             @if($order->shipping_amount > 0)
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Shipping</span>
-                                    <span class="text-gray-900">${{ number_format($order->shipping_amount, 2) }}</span>
+                                    <span class="text-gray-900">₱{{ number_format($order->shipping_amount, 2) }}</span>
                                 </div>
                             @endif
                             
                             @if($order->discount_amount > 0)
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Discount</span>
-                                    <span class="text-red-600">-${{ number_format($order->discount_amount, 2) }}</span>
+                                    <span class="text-red-600">-₱{{ number_format($order->discount_amount, 2) }}</span>
                                 </div>
                             @endif
                             
                             <div class="border-t border-gray-200 pt-4">
                                 <div class="flex justify-between">
                                     <span class="text-base font-medium text-gray-900">Total</span>
-                                    <span class="text-base font-medium text-gray-900">${{ number_format($order->total_amount, 2) }}</span>
+                                    <span class="text-base font-medium text-gray-900">₱{{ number_format($order->total_amount, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -580,7 +580,7 @@
                                     </div>
                                     <div class="flex items-center space-x-4">
                                         <span class="text-sm font-medium text-gray-900">
-                                            ${{ number_format($relatedOrder->total_amount, 2) }}
+                                            ₱{{ number_format($relatedOrder->total_amount, 2) }}
                                         </span>
                                         <a href="{{ route('orders.show', $relatedOrder) }}" 
                                            class="text-amber-600 hover:text-amber-700 text-sm font-medium">

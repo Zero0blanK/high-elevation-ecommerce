@@ -140,7 +140,13 @@
                                         <p>
                                             Courier:
                                             <span class="font-medium text-gray-700">
-                                                {{ $order->shipping_method === 'jnt' ? 'J&T Express' : ($order->shipping_method === 'lbc' ? 'LBC Express' : 'N/A') }}
+                                                {{
+                                                    $order->shipping_method === 'jnt'
+                                                        ? 'J&T Express'
+                                                        : ($order->shipping_method === 'lbc'
+                                                            ? 'LBC Express'
+                                                            : ($order->shipping_method ? strtoupper($order->shipping_method) : 'N/A'))
+                                                }}
                                             </span>
                                         </p>
                                     @endif

@@ -5,15 +5,37 @@
 @section('description', 'Your order has been successfully placed.')
 
 @section('content')
+@php
+    $isFailedPayment = isset($order) && $order && $order->payment_status === 'failed';
+    $isPendingOnlinePayment = isset($order) && $order && $order->payment_method !== 'cod' && $order->payment_status === 'pending';
+@endphp
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16">
     <div class="text-center mb-8">
-        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-            <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-        </div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
-        <p class="text-lg text-gray-600">Thank you for your purchase. Your order has been successfully placed.</p>
+        @if($isFailedPayment)
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Payment Failed</h1>
+            <p class="text-lg text-gray-600">Your payment did not go through. Your items were returned to your cart.</p>
+        @elseif($isPendingOnlinePayment)
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                <svg class="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Order Received - Payment Pending</h1>
+            <p class="text-lg text-gray-600">Your order was created, but your payment is still being confirmed.</p>
+        @else
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
+            <p class="text-lg text-gray-600">Thank you for your purchase. Your order has been successfully placed.</p>
+        @endif
     </div>
 
     @if(isset($order) && $order)

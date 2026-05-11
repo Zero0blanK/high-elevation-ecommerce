@@ -342,9 +342,11 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json'
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         product_id: {{ $product->id }},
-                        quantity: this.quantity
+                        quantity: this.quantity,
+                        product_options: {}
                     })
                 })
                 .then(response => response.json())

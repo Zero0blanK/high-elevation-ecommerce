@@ -626,6 +626,7 @@ function submitOrder(orderData) {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Accept': 'application/json'
         },
+        credentials: 'same-origin',
         body: JSON.stringify(orderData)
     })
     .then(response => response.json())

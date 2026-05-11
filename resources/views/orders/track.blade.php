@@ -79,7 +79,7 @@
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">Total</span>
-                        <span class="font-semibold">${{ number_format($order->total_amount, 2) }}</span>
+                        <span class="font-semibold">₱{{ number_format($order->total_amount, 2) }}</span>
                     </div>
                     @if($order->tracking_number)
                         <div class="flex justify-between text-sm">
@@ -97,3 +97,4 @@
     </div>
 </div>
 @endsection
+
