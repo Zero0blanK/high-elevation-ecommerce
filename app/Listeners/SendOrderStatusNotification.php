@@ -18,8 +18,8 @@ class SendOrderStatusNotification
         }
 
         match ($event->newStatus) {
-            'shipped' => $customer->notify(new OrderShipped($order)),
-            'delivered' => $customer->notify(new OrderDelivered($order)),
+            'shipped' => $customer->notifyNow(new OrderShipped($order)),
+            'delivered' => $customer->notifyNow(new OrderDelivered($order)),
             default => null,
         };
     }

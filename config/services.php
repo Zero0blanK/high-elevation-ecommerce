@@ -35,13 +35,6 @@ return [
         ],
     ],
     
-    'stripe' => [
-        'model' => App\Models\Customer::class,
-        'key' => env('STRIPE_KEY'),
-        'secret' => env('STRIPE_SECRET'),
-        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
-    ],
-
     'paypal' => [
         'client_id' => env('PAYPAL_CLIENT_ID'),
         'secret' => env('PAYPAL_SECRET'),
@@ -49,7 +42,7 @@ return [
         'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
     ],
 
-    'gcash' => [
+    'paymongo' => [
         'public_key' => env('PAYMONGO_PUBLIC_KEY'),
         'secret_key' => env('PAYMONGO_SECRET_KEY'),
         'webhook_secret' => env('PAYMONGO_WEBHOOK_SECRET'),

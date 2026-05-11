@@ -4,147 +4,74 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Payment;
-use Illuminate\Support\Facades\Http;
+use App\Services\Payment\PaymentGatewayFactory;
 use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
     public function createPaymentIntent(Order $order, array $paymentData = []): array
     {
-        $paymongoSecretKey = config('services.paymongo.secret_key');
-
-        if (empty($paymongoSecretKey)) {
-            throw new \Exception('PayMongo is not configured.');
-        }
-
-        $customerName = trim(($order->customer->first_name ?? '') . ' ' . ($order->customer->last_name ?? ''));
-
-        $response = Http::withBasicAuth($paymongoSecretKey, '')
-            ->post('https://api.paymongo.com/v1/sources', [
-                'data' => [
-                    'attributes' => [
-                        'amount' => (int) ($order->total_amount * 100),
-                        'redirect' => [
-                            'success' => route('checkout.paymongo.success', ['orderNumber' => $order->order_number]),
-                            'failed' => route('checkout.paymongo.failed', ['orderNumber' => $order->order_number]),
-                        ],
-                        'type' => 'gcash',
-                        'currency' => 'PHP',
-                        'billing' => [
-                            'name' => $customerName !== '' ? $customerName : 'Customer',
-                            'email' => $order->customer->email ?? '',
-                            'phone' => $order->customer->phone ?? null,
-                        ],
-                    ],
-                ],
-            ]);
-
-        if ($response->failed()) {
-            Log::error('PayMongo source creation failed', [
+        $gatewayName = $order->payment_method ?? 'paymongo';
+        
+        try {
+            $gateway = PaymentGatewayFactory::create($gatewayName);
+            return $gateway->createPayment($order, $paymentData);
+        } catch (\Exception $e) {
+            Log::error("Failed to create payment intent for gateway: {$gatewayName}", [
                 'order_id' => $order->id,
-                'response' => $response->json(),
+                'error' => $e->getMessage()
             ]);
-
-            throw new \Exception('Failed to create PayMongo payment.');
+            throw $e;
         }
-
-        $source = $response->json('data');
-
-        $payment = Payment::create([
-            'order_id' => $order->id,
-            'payment_method' => 'paymongo',
-            'payment_gateway' => 'paymongo',
-            'transaction_id' => $source['id'] ?? null,
-            'amount' => $order->total_amount,
-            'currency' => $order->currency,
-            'status' => 'pending',
-            'gateway_response' => $source ?? [],
-        ]);
-
-        return [
-            'payment' => $payment,
-            'payment_url' => $source['attributes']['redirect']['checkout_url'] ?? null,
-            'transaction_id' => $source['id'] ?? null,
-        ];
     }
 
     public function confirmPayment($transactionId, Order $order): bool
     {
-        $payment = Payment::where('transaction_id', $transactionId)
-            ->where('order_id', $order->id)
-            ->first();
-
-        if (!$payment) {
-            throw new \Exception('Payment record not found');
+        $gatewayName = $order->payment_method ?? 'paymongo';
+        
+        try {
+            $gateway = PaymentGatewayFactory::create($gatewayName);
+            return $gateway->confirmPayment($transactionId, $order);
+        } catch (\Exception $e) {
+            Log::error("Failed to confirm payment for gateway: {$gatewayName}", [
+                'transaction_id' => $transactionId,
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
-
-        $payment->update([
-            'status' => 'completed',
-            'processed_at' => now(),
-        ]);
-
-        $order->update([
-            'payment_status' => 'paid',
-            'status' => 'processing',
-        ]);
-
-        return true;
     }
 
     public function refundPayment(Payment $payment, $amount = null)
     {
-        throw new \Exception('Refund is not yet supported for PayMongo in this integration.');
+        $gatewayName = $payment->payment_gateway ?? 'paymongo';
+        
+        try {
+            $gateway = PaymentGatewayFactory::create($gatewayName);
+            return $gateway->refund($payment, $amount);
+        } catch (\Exception $e) {
+            Log::error("Failed to process refund for gateway: {$gatewayName}", [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
     public function handleWebhook($payload, $signature)
     {
-        $event = json_decode($payload, true);
-
-        if (!is_array($event)) {
-            throw new \Exception('Invalid webhook payload');
-        }
-
-        $eventType = data_get($event, 'data.attributes.type') ?? data_get($event, 'type');
-
-        $candidateTransactionIds = array_filter([
-            data_get($event, 'data.attributes.data.id'),
-            data_get($event, 'data.attributes.data.attributes.id'),
-            data_get($event, 'data.attributes.data.attributes.source.id'),
-            data_get($event, 'data.attributes.id'),
-        ]);
-
-        if (empty($candidateTransactionIds)) {
-            return true;
-        }
-
-        $payment = Payment::whereIn('transaction_id', $candidateTransactionIds)->first();
-
-        if (!$payment) {
-            return true;
-        }
-
-        if (in_array($eventType, ['payment.paid', 'source.chargeable'], true)) {
-            $payment->update([
-                'status' => 'completed',
-                'processed_at' => now(),
-                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $event]),
+        // For webhooks, we might need to identify the gateway from the payload
+        // Or have separate endpoints. Here we assume PayMongo for now as per original code.
+        // A better way would be to have gateway-specific webhook controllers.
+        
+        try {
+            $gateway = PaymentGatewayFactory::create('paymongo');
+            return $gateway->handleWebhook($payload, $signature);
+        } catch (\Exception $e) {
+            Log::error("Failed to handle PayMongo webhook", [
+                'error' => $e->getMessage()
             ]);
-
-            $payment->order->update([
-                'payment_status' => 'paid',
-                'status' => $payment->order->status === 'pending' ? 'processing' : $payment->order->status,
-            ]);
+            return false;
         }
-
-        if (in_array($eventType, ['payment.failed', 'source.failed'], true)) {
-            $payment->update([
-                'status' => 'failed',
-                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $event]),
-            ]);
-
-            $payment->order->update(['payment_status' => 'failed']);
-        }
-
-        return true;
     }
 }

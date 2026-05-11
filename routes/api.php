@@ -40,8 +40,7 @@ Route::prefix('cart')->group(function () {
 // Authentication API
 // Webhooks
 Route::prefix('webhooks')->group(function () {
-    Route::post('/stripe', [WebhookController::class, 'stripeWebhook']);
-    Route::post('/paypal', [WebhookController::class, 'paypalWebhook']);
+    Route::post('/paymongo', [WebhookController::class, 'paymongoWebhook']);
 });
 
 // Currency API

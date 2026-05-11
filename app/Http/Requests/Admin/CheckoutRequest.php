@@ -38,7 +38,7 @@ class CheckoutRequest extends FormRequest
             'billing_address.country' => 'required_with:billing_address|string|max:100',
             'billing_address.phone' => 'nullable|string|max:20',
             
-            'payment_method' => 'required|in:stripe',
+            'payment_method' => 'required|in:gcash,paymongo_card,paymongo,paypal,cod',
             'coupon_code' => 'nullable|string|exists:coupons,code',
             'save_address' => 'boolean',
             'newsletter_signup' => 'boolean'

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('customer_address_id')->nullable()->constrained()->nullOnDelete();
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])->default('pending');
-            $table->string('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('PHP');
             $table->decimal('subtotal', 10, 2);
             $table->decimal('tax_amount', 10, 2)->default(0);
             $table->decimal('shipping_amount', 10, 2)->default(0);

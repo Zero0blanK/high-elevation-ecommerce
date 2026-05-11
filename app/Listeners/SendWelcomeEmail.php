@@ -4,12 +4,11 @@ namespace App\Listeners;
 
 use App\Events\CustomerRegistered;
 use App\Notifications\WelcomeNotification;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
-class SendWelcomeEmail implements ShouldQueue
+class SendWelcomeEmail
 {
     public function handle(CustomerRegistered $event): void
     {
-        $event->customer->notify(new WelcomeNotification($event->customer));
+        $event->customer->notifyNow(new WelcomeNotification($event->customer));
     }
 }

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('transaction_id')->nullable();
             $table->string('gateway_transaction_id')->nullable();
             $table->decimal('amount', 10, 2);
-            $table->string('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('PHP');
             $table->enum('status', ['pending', 'completed', 'failed', 'cancelled', 'refunded'])->default('pending');
             $table->json('gateway_response')->nullable();
             $table->timestamp('processed_at')->nullable();

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\UpdateOrderStatusRequest;
 
 class OrderController extends Controller
 {
@@ -16,7 +16,7 @@ class OrderController extends Controller
         $this->orderService = $orderService;
     }
 
-    public function index(Request $request)
+    public function index(\Illuminate\Http\Request $request)
     {
         $filters = [
             'status' => $request->status,
@@ -37,28 +37,30 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order'));
     }
 
-    public function updateStatus(Request $request, Order $order)
+    public function updateStatus(UpdateOrderStatusRequest $request, Order $order)
     {
-        $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled,refunded',
-            'tracking_number' => 'required_if:status,shipped,delivered|nullable|string|max:100',
-            'shipping_method' => 'required_if:status,shipped,delivered|nullable|in:jnt,lbc',
-            'notes' => 'nullable|string'
-        ]);
-
         try {
-            $data = [];
+            $data = $request->validated();
+            $status = $data['status'];
+
+            // "Quick Deliver" logic: If tracking number is provided and quick_deliver is checked,
+            // we transition straight to delivered.
+            if ($request->boolean('quick_deliver') && $request->filled('tracking_number')) {
+                $status = 'delivered';
+            }
+
+            $updateData = [];
             if ($request->filled('tracking_number')) {
-                $data['tracking_number'] = $request->tracking_number;
+                $updateData['tracking_number'] = $data['tracking_number'];
             }
             if ($request->filled('shipping_method')) {
-                $data['shipping_method'] = $request->shipping_method;
+                $updateData['shipping_method'] = $data['shipping_method'];
             }
             if ($request->filled('notes')) {
-                $data['notes'] = $request->notes;
+                $updateData['notes'] = $data['notes'];
             }
 
-            $this->orderService->updateOrderStatus($order, $request->status, $data);
+            $this->orderService->updateOrderStatus($order, $status, $updateData);
 
             return back()->with('success', 'Order status updated successfully.');
         } catch (\Exception $e) {
@@ -76,7 +78,7 @@ class OrderController extends Controller
         return view('admin.orders.shipping-label', compact('order', 'shippingAddr'));
     }
 
-    public function refund(Request $request, Order $order)
+    public function refund(\Illuminate\Http\Request $request, Order $order)
     {
         $request->validate([
             'amount' => 'nullable|numeric|min:0|max:' . $order->total_amount,

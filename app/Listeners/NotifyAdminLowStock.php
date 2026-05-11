@@ -15,7 +15,7 @@ class NotifyAdminLowStock
             ->get();
 
         foreach ($admins as $admin) {
-            $admin->notify(new LowStockNotification($event->product, $event->currentStock));
+            $admin->notifyNow(new LowStockNotification($event->product, $event->currentStock));
         }
     }
 }

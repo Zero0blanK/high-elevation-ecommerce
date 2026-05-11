@@ -57,8 +57,7 @@ class CartRepository
         array $options = []
     ): ?ShoppingCart {
         $query = $this->model->newQuery()
-            ->where('product_id', $productId)
-            ->where('product_options', json_encode($options));
+            ->where('product_id', $productId);
 
         if ($customerId) {
             $query->where('customer_id', $customerId);
@@ -66,7 +65,12 @@ class CartRepository
             $query->where('session_id', $sessionId);
         }
 
-        return $query->first();
+        // Get all items for this product and filter by options
+        return $query->get()
+            ->first(function ($item) use ($options) {
+                $itemOptions = $item->product_options ?? [];
+                return $itemOptions === $options;
+            });
     }
 
     /**
@@ -139,11 +143,16 @@ class CartRepository
         int $productId,
         mixed $productOptions
     ): ?ShoppingCart {
+        $options = is_array($productOptions) ? $productOptions : json_decode($productOptions, true) ?? [];
+        
         return $this->model->newQuery()
             ->forCustomer($customerId)
             ->where('product_id', $productId)
-            ->where('product_options', $productOptions)
-            ->first();
+            ->get()
+            ->first(function ($item) use ($options) {
+                $itemOptions = $item->product_options ?? [];
+                return $itemOptions === $options;
+            });
     }
 
     /**

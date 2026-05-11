@@ -20,14 +20,14 @@ class OrderFactory extends Factory
             'order_number' => 'ORD-' . strtoupper(uniqid()),
             'customer_id' => Customer::factory(),
             'status' => fake()->randomElement(['pending', 'processing', 'shipped', 'delivered']),
-            'currency' => 'USD',
+            'currency' => 'PHP',
             'subtotal' => $subtotal,
             'tax_amount' => $tax,
             'shipping_amount' => $shipping,
             'discount_amount' => 0,
             'total_amount' => $subtotal + $tax + $shipping,
             'payment_status' => fake()->randomElement(['pending', 'paid']),
-            'payment_method' => 'stripe',
+            'payment_method' => 'paymongo',
             'shipping_method' => fake()->randomElement(['standard', 'express', 'overnight']),
         ];
     }

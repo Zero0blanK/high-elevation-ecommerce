@@ -67,9 +67,11 @@ class PayPalGateway implements PaymentGatewayInterface
                 ->firstWhere('rel', 'approve')['href'] ?? null;
 
             return [
-                'payment' => $payment,
-                'approval_url' => $approvalUrl,
-                'paypal_order_id' => $paypalOrder['id'],
+                'success' => true,
+                'payment_url' => $approvalUrl,
+                'transaction_id' => $paypalOrder['id'],
+                'gateway_response' => $paypalOrder,
+                'requires_action' => !empty($approvalUrl),
             ];
         } catch (\Exception $e) {
             Log::error('PayPal: Payment creation failed', [

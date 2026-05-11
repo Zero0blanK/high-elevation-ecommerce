@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin.auth' => \App\Http\Middleware\AdminAuth::class,
             'admin.role' => \App\Http\Middleware\CheckAdminRole::class,
+            'prevent.customer.admin' => \App\Http\Middleware\PreventCustomerAccessToAdmin::class,
             'customer.auth' => \App\Http\Middleware\CustomerAuth::class,
             'currency' => \App\Http\Middleware\CurrencyMiddleware::class,
         ]);

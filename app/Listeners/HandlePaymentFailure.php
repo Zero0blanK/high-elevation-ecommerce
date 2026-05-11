@@ -3,10 +3,9 @@
 namespace App\Listeners;
 
 use App\Events\PaymentFailed;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
-class HandlePaymentFailure implements ShouldQueue
+class HandlePaymentFailure
 {
     public function handle(PaymentFailed $event): void
     {
@@ -17,6 +16,6 @@ class HandlePaymentFailure implements ShouldQueue
             'reason' => $event->reason,
         ]);
 
-        $event->order->update(['payment_status' => 'failed']);
+        app(\App\Services\CheckoutService::class)->failOrderPayment($event->order, $event->payment);
     }
 }

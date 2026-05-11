@@ -13,7 +13,7 @@ class CurrencyMiddleware
         $currencyCode = $request->query('currency')
             ?? $request->cookie('currency')
             ?? session('currency')
-            ?? config('ecommerce.currency.code', 'USD');
+            ?? config('ecommerce.currency.default', 'PHP');
 
         app()->singleton('current_currency', function () use ($currencyCode) {
             $currencyService = app(CurrencyService::class);

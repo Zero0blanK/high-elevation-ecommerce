@@ -204,26 +204,72 @@ class OrderController extends Controller
         $trackingUrl = $this->buildTrackingUrl($normalizedProvider, $trackingNumber);
         $estimatedDelivery = now()->addDays(3)->format('Y-m-d');
 
-        $trackingHistory = [
-            [
-                'date' => now()->subDays(2)->format('Y-m-d H:i:s'),
-                'status' => 'Package accepted by courier',
-                'location' => 'Origin facility',
-                'description' => 'Your parcel was accepted and is being prepared for transit.',
-            ],
-            [
-                'date' => now()->subDay()->format('Y-m-d H:i:s'),
-                'status' => 'In transit',
-                'location' => 'Sorting hub',
-                'description' => 'Your parcel is being routed to the destination hub.',
-            ],
-            [
-                'date' => now()->format('Y-m-d H:i:s'),
-                'status' => 'Out for delivery',
-                'location' => 'Destination city',
-                'description' => 'Your parcel is with the delivery rider/courier.',
-            ],
-        ];
+        $trackingHistory = [];
+        
+        if ($normalizedProvider === 'jnt') {
+            $trackingHistory = [
+                [
+                    'date' => now()->subDays(2)->format('Y-m-d H:i:s'),
+                    'status' => 'Parcel is being prepared',
+                    'location' => 'Seller Warehouse',
+                    'description' => 'The seller is preparing to ship your parcel.',
+                ],
+                [
+                    'date' => now()->subDays(1)->format('Y-m-d H:i:s'),
+                    'status' => 'Picked up by J&T Express',
+                    'location' => 'Drop-off Point',
+                    'description' => 'Your parcel has been picked up and is now in transit.',
+                ],
+                [
+                    'date' => now()->subHours(5)->format('Y-m-d H:i:s'),
+                    'status' => 'Arrived at Sort Facility',
+                    'location' => 'Regional Hub',
+                    'description' => 'Your parcel is being sorted for delivery.',
+                ],
+                [
+                    'date' => now()->format('Y-m-d H:i:s'),
+                    'status' => 'Out for delivery',
+                    'location' => 'Local Hub',
+                    'description' => 'The rider is on the way to your location.',
+                ],
+            ];
+        } elseif ($normalizedProvider === 'lbc') {
+             $trackingHistory = [
+                [
+                    'date' => now()->subDays(2)->format('Y-m-d H:i:s'),
+                    'status' => 'Accepted at LBC Branch',
+                    'location' => 'Origin Branch',
+                    'description' => 'Parcel has been accepted and is ready for consolidation.',
+                ],
+                [
+                    'date' => now()->subDays(1)->format('Y-m-d H:i:s'),
+                    'status' => 'In Transit to Destination',
+                    'location' => 'Main Distribution Center',
+                    'description' => 'Parcel is currently moving towards the destination province.',
+                ],
+                [
+                    'date' => now()->format('Y-m-d H:i:s'),
+                    'status' => 'Out for Delivery',
+                    'location' => 'Delivery Team',
+                    'description' => 'LBC team is out to deliver your package.',
+                ],
+            ];
+        } else {
+            $trackingHistory = [
+                [
+                    'date' => now()->subDay()->format('Y-m-d H:i:s'),
+                    'status' => 'Order Processed',
+                    'location' => 'Warehouse',
+                    'description' => 'Your order has been processed and is awaiting pickup.',
+                ],
+                [
+                    'date' => now()->format('Y-m-d H:i:s'),
+                    'status' => 'In Transit',
+                    'location' => 'Shipping Facility',
+                    'description' => 'Your package is on its way.',
+                ],
+            ];
+        }
 
         return [
             'tracking_number' => $trackingNumber,

@@ -14,7 +14,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'general', 'key' => 'site_name', 'value' => 'High Elevation'],
             ['group' => 'general', 'key' => 'site_email', 'value' => 'info@highelevation.com'],
             ['group' => 'general', 'key' => 'site_phone', 'value' => '+1 (555) 123-4567'],
-            ['group' => 'general', 'key' => 'currency', 'value' => 'USD'],
+            ['group' => 'general', 'key' => 'currency', 'value' => 'PHP'],
             ['group' => 'general', 'key' => 'site_description', 'value' => 'Premium outdoor gear and equipment'],
 
             // Email Settings
@@ -25,8 +25,8 @@ class SettingsSeeder extends Seeder
             ['group' => 'email', 'key' => 'smtp_encryption', 'value' => 'tls'],
 
             // Payment Settings
-            ['group' => 'payment', 'key' => 'stripe_public_key', 'value' => ''],
-            ['group' => 'payment', 'key' => 'stripe_secret_key', 'value' => ''],
+            ['group' => 'payment', 'key' => 'paymongo_public_key', 'value' => ''],
+            ['group' => 'payment', 'key' => 'paymongo_secret_key', 'value' => ''],
             ['group' => 'payment', 'key' => 'paypal_client_id', 'value' => ''],
             ['group' => 'payment', 'key' => 'paypal_secret', 'value' => ''],
 

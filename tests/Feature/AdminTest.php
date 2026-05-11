@@ -1,28 +1,30 @@
 <?php
 
 use App\Models\Admin;
+use App\Models\Customer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('admin login page loads', function () {
-    $response = $this->get(route('admin.login'));
+test('shared login page loads', function () {
+    $response = $this->get(route('customer.login'));
     $response->assertStatus(200);
 });
 
-test('admin can login with valid credentials', function () {
+test('admin can login from shared login endpoint', function () {
     $admin = Admin::factory()->create([
         'password' => bcrypt('admin123'),
         'role' => 'super_admin',
         'is_active' => true,
     ]);
 
-    $response = $this->post(route('admin.login'), [
+    $response = $this->post(route('customer.login'), [
         'email' => $admin->email,
         'password' => 'admin123',
     ]);
 
-    $response->assertRedirect();
+    $response->assertRedirect(route('admin.dashboard'));
+    $this->assertAuthenticated('admin');
 });
 
 test('admin dashboard requires authentication', function () {
@@ -40,4 +42,13 @@ test('authenticated admin can access dashboard', function () {
         ->get(route('admin.dashboard'));
 
     $response->assertStatus(200);
+});
+
+test('customer cannot access admin dashboard', function () {
+    $customer = Customer::factory()->create();
+
+    $response = $this->actingAs($customer, 'customer')
+        ->get(route('admin.dashboard'));
+
+    $response->assertStatus(403);
 });

@@ -14,7 +14,7 @@ class AdminAuth
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthenticated'], 401);
             }
-            return redirect()->route('admin.login');
+            return redirect()->route('customer.login');
         }
 
         if (!Auth::guard($guard)->user()->is_active) {
@@ -22,7 +22,7 @@ class AdminAuth
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Account deactivated'], 403);
             }
-            return redirect()->route('admin.login')->with('error', 'Your account has been deactivated.');
+            return redirect()->route('customer.login')->with('error', 'Your account has been deactivated.');
         }
 
         return $next($request);

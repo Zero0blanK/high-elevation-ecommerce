@@ -63,6 +63,9 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::post('/reset-password', [CustomerAuthController::class, 'reset'])->name('password.update');
 });
 
+Route::get('/login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [CustomerAuthController::class, 'login']);
+
 // Protected Customer Routes
 Route::middleware(['customer.auth'])->group(function () {
     // Checkout Routes
@@ -71,6 +74,8 @@ Route::middleware(['customer.auth'])->group(function () {
         Route::post('/process', [CheckoutController::class, 'process'])->name('process');
         Route::get('/success/{orderNumber}', [CheckoutController::class, 'success'])->name('success');
         Route::post('/buy-now', [CheckoutController::class, 'buyNow'])->name('buyNow');
+        Route::get('/paymongo/success/{orderNumber}', [CheckoutController::class, 'paymongoSuccess'])->name('paymongo.success');
+        Route::get('/paymongo/failed/{orderNumber}', [CheckoutController::class, 'paymongoFailed'])->name('paymongo.failed');
         Route::get('/gcash/success/{orderNumber}', [CheckoutController::class, 'gcashSuccess'])->name('gcash.success');
         Route::get('/gcash/failed/{orderNumber}', [CheckoutController::class, 'gcashFailed'])->name('gcash.failed');
     });
@@ -126,13 +131,10 @@ Route::get('/shipping-returns', [PageController::class, 'shipping'])->name('ship
 
 
 Route::prefix('admin')->name('admin.')->group(function () {
-    // Admin Authentication Routes
-    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminAuthController::class, 'login']);
-    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
-
     // Protected Admin Routes
-    Route::middleware(['admin.auth'])->group(function () {
+    Route::middleware(['prevent.customer.admin', 'admin.auth'])->group(function () {
+        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+
         // Dashboard
         Route::get('/', [KpiController::class, 'index'])->name('dashboard');
         Route::get('/dashboard', [KpiController::class, 'index']);
@@ -158,6 +160,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/products/{product}/images/{image}', [AdminProductController::class, 'deleteImage'])->name('products.delete-image');
 
         // Category Management
+        Route::get('categories/trashed', [AdminCategoryController::class, 'trashed'])->name('categories.trashed');
+        Route::post('categories/restore-product/{id}', [AdminCategoryController::class, 'restoreProduct'])->name('categories.restore-product');
+        Route::delete('categories/force-delete-product/{id}', [AdminCategoryController::class, 'forceDeleteProduct'])->name('categories.force-delete-product');
         Route::resource('categories', AdminCategoryController::class);
         Route::post('/categories/bulk-action', [AdminCategoryController::class, 'bulkAction'])->name('categories.bulk-action');
 

@@ -166,22 +166,28 @@ class CheckoutService
                 'redirect_url' => route('checkout.success', ['orderNumber' => $order->order_number])
             ];
 
-            switch ($paymentMethod) {
-                case 'paymongo':
-                case 'gcash':
-                case 'paymongo_card':
-                    $result = $this->processPayMongoPayment($order, $customer, $paymentMethod);
-                    break;
+            if ($paymentMethod !== 'cod') {
+                $gateway = \App\Services\Payment\PaymentGatewayFactory::create($paymentMethod);
+                $paymentResult = $gateway->createPayment($order, $data);
+                
+                $this->createPaymentRecord(
+                    $order,
+                    $paymentMethod,
+                    'pending',
+                    $paymentResult['transaction_id'] ?? null,
+                    $paymentResult['gateway_response'] ?? []
+                );
 
-                case 'paypal':
-                    $result = $this->processPayPalPayment($order, $data);
-                    break;
-
-                case 'cod':
-                default:
-                    // For COD, just mark as pending and redirect to success
-                    $this->createPaymentRecord($order, 'cod', 'pending');
-                    break;
+                $result['payment_url'] = $paymentResult['payment_url'] ?? null;
+                $result['requires_action'] = $paymentResult['requires_action'] ?? false;
+                
+                // Special handling for PayPal if already completed on frontend
+                if ($paymentMethod === 'paypal' && !empty($data['paypal_order_id'])) {
+                    $order->update(['payment_status' => 'paid', 'status' => 'processing']);
+                    Payment::where('transaction_id', $data['paypal_order_id'])->update(['status' => 'completed']);
+                }
+            } else {
+                $this->createPaymentRecord($order, 'cod', 'pending');
             }
 
             // Clear the cart
@@ -189,146 +195,6 @@ class CheckoutService
 
             return $result;
         });
-    }
-
-    /**
-     * Process PayPal payment
-     */
-    protected function processPayPalPayment(Order $order, array $data): array
-    {
-        // PayPal payment is already captured on the frontend
-        // We just need to verify and record it
-        if (!empty($data['paypal_order_id'])) {
-            $this->createPaymentRecord($order, 'paypal', 'completed', $data['paypal_order_id']);
-            $order->update(['payment_status' => 'paid', 'status' => 'processing']);
-        }
-
-        return [
-            'order' => $order,
-            'success' => true,
-            'redirect_url' => route('checkout.success', ['orderNumber' => $order->order_number])
-        ];
-    }
-
-    /**
-     * Process payment via PayMongo
-     */
-    protected function processPayMongoPayment(Order $order, Customer $customer, string $paymentMethod = 'gcash'): array
-    {
-        $paymongoSecretKey = config('services.paymongo.secret_key');
-
-        if (empty($paymongoSecretKey)) {
-            throw new \Exception('PayMongo is not configured. Please contact support.');
-        }
-
-        $normalizedMethod = $paymentMethod === 'paymongo' ? 'gcash' : $paymentMethod;
-
-        if ($normalizedMethod === 'paymongo_card') {
-            return $this->processPayMongoCheckoutSession($order, $customer);
-        }
-
-        try {
-            $response = Http::withBasicAuth($paymongoSecretKey, '')
-                ->post('https://api.paymongo.com/v1/sources', [
-                    'data' => [
-                        'attributes' => [
-                            'amount' => (int) ($order->total_amount * 100),
-                            'redirect' => [
-                                'success' => route('checkout.paymongo.success', ['orderNumber' => $order->order_number]),
-                                'failed' => route('checkout.paymongo.failed', ['orderNumber' => $order->order_number]),
-                            ],
-                            'type' => 'gcash',
-                            'currency' => 'PHP',
-                            'billing' => [
-                                'name' => $customer->first_name . ' ' . $customer->last_name,
-                                'email' => $customer->email,
-                                'phone' => $customer->phone ?? null,
-                            ],
-                        ],
-                    ],
-                ]);
-
-            if ($response->failed()) {
-                Log::error('PayMongo source creation failed', ['response' => $response->json()]);
-                throw new \Exception('Failed to create PayMongo payment source.');
-            }
-
-            $source = $response->json()['data'];
-
-            $this->createPaymentRecord(
-                $order,
-                'paymongo',
-                'pending',
-                $source['id'],
-                $source
-            );
-
-            return [
-                'order' => $order,
-                'success' => true,
-                'payment_url' => $source['attributes']['redirect']['checkout_url'],
-                'redirect_url' => route('checkout.success', ['orderNumber' => $order->order_number])
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('PayMongo payment processing failed', ['error' => $e->getMessage()]);
-            throw new \Exception('PayMongo payment failed: ' . $e->getMessage());
-        }
-    }
-
-    protected function processPayMongoCheckoutSession(Order $order, Customer $customer): array
-    {
-        $paymongoSecretKey = config('services.paymongo.secret_key');
-
-        $response = Http::withBasicAuth($paymongoSecretKey, '')
-            ->post('https://api.paymongo.com/v1/checkout_sessions', [
-                'data' => [
-                    'attributes' => [
-                        'billing' => [
-                            'name' => trim($customer->first_name . ' ' . $customer->last_name),
-                            'email' => $customer->email,
-                            'phone' => $customer->phone ?? null,
-                        ],
-                        'line_items' => [
-                            [
-                                'currency' => 'PHP',
-                                'amount' => (int) ($order->total_amount * 100),
-                                'name' => 'Order ' . $order->order_number,
-                                'quantity' => 1,
-                            ],
-                        ],
-                        'payment_method_types' => ['card'],
-                        'success_url' => route('checkout.paymongo.success', ['orderNumber' => $order->order_number]),
-                        'cancel_url' => route('checkout.paymongo.failed', ['orderNumber' => $order->order_number]),
-                    ],
-                ],
-            ]);
-
-        if ($response->failed()) {
-            Log::error('PayMongo card checkout session creation failed', [
-                'order_id' => $order->id,
-                'response' => $response->json(),
-            ]);
-
-            throw new \Exception('Failed to create PayMongo card checkout session.');
-        }
-
-        $session = $response->json('data');
-
-        $this->createPaymentRecord(
-            $order,
-            'paymongo',
-            'pending',
-            $session['id'] ?? null,
-            $session ?? []
-        );
-
-        return [
-            'order' => $order,
-            'success' => true,
-            'payment_url' => data_get($session, 'attributes.checkout_url'),
-            'redirect_url' => route('checkout.success', ['orderNumber' => $order->order_number]),
-        ];
     }
 
     /**
@@ -390,15 +256,16 @@ class CheckoutService
         $order = $this->getOrderForSuccess($orderNumber, $customerId);
 
         $payment = Payment::where('order_id', $order->id)
-            ->whereIn('payment_gateway', ['paymongo', 'gcash'])
+            ->whereIn('payment_gateway', ['paymongo', 'gcash', 'paymongo_card'])
             ->first();
 
         if ($payment) {
-            $payment->update(['status' => 'completed', 'processed_at' => now()]);
-            $order->update(['payment_status' => 'paid', 'status' => 'processing']);
+            $gatewayName = $payment->payment_gateway ?: $order->payment_method ?: 'paymongo';
+            $gateway = \App\Services\Payment\PaymentGatewayFactory::create($gatewayName);
+            $gateway->confirmPayment((string) $payment->transaction_id, $order);
         }
 
-        return $order;
+        return $order->fresh();
     }
 
     /**
@@ -409,15 +276,10 @@ class CheckoutService
         $order = $this->getOrderForSuccess($orderNumber, $customerId);
 
         $payment = Payment::where('order_id', $order->id)
-            ->whereIn('payment_gateway', ['paymongo', 'gcash'])
+            ->whereIn('payment_gateway', ['paymongo', 'gcash', 'paymongo_card'])
             ->first();
 
-        if ($payment) {
-            $payment->update(['status' => 'failed']);
-            $order->update(['payment_status' => 'failed']);
-        }
-
-        return $order;
+        return $this->failOrderPayment($order, $payment);
     }
 
     public function handleGCashSuccess(string $orderNumber, int $customerId): Order
@@ -428,5 +290,48 @@ class CheckoutService
     public function handleGCashFailed(string $orderNumber, int $customerId): Order
     {
         return $this->handlePayMongoFailed($orderNumber, $customerId);
+    }
+
+    public function failOrderPayment(Order $order, ?Payment $payment = null): Order
+    {
+        return DB::transaction(function () use ($order, $payment) {
+            $order->loadMissing(['items']);
+
+            $payment ??= Payment::where('order_id', $order->id)
+                ->whereIn('payment_gateway', ['paymongo', 'gcash', 'paymongo_card'])
+                ->first();
+
+            if ($payment && $payment->status !== 'failed') {
+                $payment->update(['status' => 'failed']);
+            }
+
+            if ($order->payment_status !== 'failed') {
+                $order->update(['payment_status' => 'failed']);
+            }
+
+            // Prevent duplicate cart/inventory restoration on repeated callbacks/webhooks.
+            if ($order->status !== 'cancelled') {
+                foreach ($order->items as $item) {
+                    $this->inventoryService->adjustStock(
+                        $item->product_id,
+                        $item->quantity,
+                        'return',
+                        $order,
+                        'Payment failed - stock restored'
+                    );
+
+                    $this->cartService->addToCart(
+                        $item->product_id,
+                        $item->quantity,
+                        $item->product_options ?? [],
+                        $order->customer_id
+                    );
+                }
+
+                $order->update(['status' => 'cancelled']);
+            }
+
+            return $order->fresh();
+        });
     }
 }

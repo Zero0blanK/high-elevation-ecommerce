@@ -16,8 +16,8 @@ return [
     ],
 
     'currency' => [
-        'default' => env('STORE_CURRENCY', 'USD'),
-        'symbol' => env('STORE_CURRENCY_SYMBOL', '$'),
+        'default' => env('STORE_CURRENCY', 'PHP'),
+        'symbol' => env('STORE_CURRENCY_SYMBOL', '₱'),
         'position' => env('STORE_CURRENCY_POSITION', 'before'), // before or after
     ],
 

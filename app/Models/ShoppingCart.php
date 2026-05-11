@@ -20,7 +20,7 @@ class ShoppingCart extends Model
     ];
 
     protected $casts = [
-      'session_id' => 'int',
+      'session_id' => 'string',
       'customer_id' => 'integer',
       'quantity' => 'int',
       'product_options' => 'array'

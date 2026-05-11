@@ -51,20 +51,12 @@ class CheckoutController extends Controller
         }
     }
 
-    public function process(Request $request)
+    public function process(\App\Http\Requests\CheckoutProcessRequest $request)
     {
-        $request->validate([
-            'shipping_address_id' => 'required|exists:customer_addresses,id',
-            'payment_method' => 'nullable|string',
-            'same_as_shipping' => 'nullable|boolean',
-            'billing_address_id' => 'nullable|exists:customer_addresses,id',
-            'order_notes' => 'nullable|string|max:1000',
-        ]);
-
         try {
             $customer = Auth::guard('customer')->user();
             
-            $result = $this->checkoutService->processCheckout($customer, $request->all());
+            $result = $this->checkoutService->processCheckout($customer, $request->validated());
 
             return response()->json([
                 'success' => true,
@@ -112,10 +104,10 @@ class CheckoutController extends Controller
     {
         try {
             $customer = Auth::guard('customer')->user();
-            $order = $this->checkoutService->handlePayMongoFailed($orderNumber, $customer->id);
+            $this->checkoutService->handlePayMongoFailed($orderNumber, $customer->id);
 
             return redirect()->route('checkout.index')
-                ->with('error', 'PayMongo payment failed. Please try again or use a different payment method.');
+                ->with('error', 'PayMongo payment failed. Your items were returned to your cart.');
         } catch (\Exception $e) {
             Log::error('PayMongo failed callback failed: ' . $e->getMessage());
             return redirect()->route('cart.index')->with('error', 'An error occurred. Please try again.');

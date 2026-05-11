@@ -114,11 +114,9 @@ class OrderService
                 break;
             case 'shipped':
                 $this->orderRepository->update($order, ['shipped_at' => now()]);
-                Mail::to($order->customer->email)->send(new \App\Mail\OrderShipped($order));
                 break;
             case 'delivered':
                 $this->orderRepository->update($order, ['delivered_at' => now()]);
-                Mail::to($order->customer->email)->send(new \App\Mail\OrderDelivered($order));
                 break;
             case 'cancelled':
                 $this->restoreInventoryFromOrder($order);
