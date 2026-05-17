@@ -147,8 +147,8 @@
                         <div id="paypal-button-container" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200"></div>
 
                         <!-- PayMongo Info Section -->
-                        <div id="paymongo-section" class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <div class="flex items-center gap-3">
+                        <div id="paymongo-section" class="hidden">
+                            {{-- <div class="flex items-center gap-3">
                                 <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                                 </svg>
@@ -156,7 +156,7 @@
                                     <p id="paymongo-section-title" class="font-medium text-blue-800">GCash via PayMongo</p>
                                     <p id="paymongo-section-description" class="text-sm text-blue-600">You will be redirected to PayMongo to complete your GCash payment securely.</p>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
 
                         <!-- Cash on Delivery -->
@@ -393,7 +393,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Hide all payment sections
             document.getElementById('paypal-button-container').classList.add('hidden');
-            paymongoSection.classList.add('hidden');
+            if (paymongoSection) {
+                paymongoSection.classList.add('hidden');
+            }
             document.getElementById('standard-checkout-btn').classList.remove('hidden');
             
             // Show relevant section
@@ -402,9 +404,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('standard-checkout-btn').classList.add('hidden');
                 initPayPalButtons();
             } else if (method === 'gcash' || method === 'paymongo_card') {
-                paymongoSection.classList.remove('hidden');
-                updatePayMongoSection(method);
+                if (paymongoSection) {
+                    paymongoSection.classList.remove('hidden');
+                    updatePayMongoSection(method);
+                }
             }
+            // For COD and other methods, the standard checkout button stays visible
 
             setActivePaymentMethod(method);
         });
@@ -417,9 +422,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('standard-checkout-btn').classList.add('hidden');
         initPayPalButtons();
     } else if (selectedMethod === 'gcash' || selectedMethod === 'paymongo_card') {
-        paymongoSection.classList.remove('hidden');
-        updatePayMongoSection(selectedMethod);
+        if (paymongoSection) {
+            paymongoSection.classList.remove('hidden');
+            updatePayMongoSection(selectedMethod);
+        }
     }
+    // For COD and other methods, the standard checkout button is visible by default
     setActivePaymentMethod(selectedMethod);
 
     // Billing address toggle
