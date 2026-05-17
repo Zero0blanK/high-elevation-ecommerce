@@ -3,7 +3,7 @@
 @section('title', $customer->first_name . ' ' . $customer->last_name)
 
 @section('content')
-<div class="py-6 px-4 sm:px-6 lg:px-8" x-data="{ showDeleteModal: false }">
+<div x-data="{ showDeleteModal: false }">
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div class="flex items-center gap-4">
@@ -164,7 +164,7 @@
             </div>
 
             {{-- Coffee Preferences --}}
-            @if($customer->preferences)
+            {{-- @if($customer->preferences)
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="text-base font-semibold text-gray-900 mb-4">
                         <span class="inline-flex items-center gap-2">
@@ -221,7 +221,7 @@
                         </div>
                     </dl>
                 </div>
-            @endif
+            @endif --}}
 
             {{-- Addresses --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -282,7 +282,7 @@
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order #</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
@@ -295,7 +295,7 @@
                                         </a>
                                     </td>
                                     <td class="px-6 py-3.5 text-sm text-gray-500">{{ $order->created_at->format('M d, Y') }}</td>
-                                    <td class="px-6 py-3.5 text-sm font-medium text-gray-900 text-right">₱{{ number_format($order->total_amount, 2) }}</td>
+                                    <td class="px-6 py-3.5 text-sm font-medium text-gray-900 text-left">₱{{ number_format($order->total_amount, 2) }}</td>
                                     <td class="px-6 py-3.5">
                                         @php
                                             $statusStyles = [
@@ -341,21 +341,6 @@
                         Edit Customer
                     </a>
 
-                    <form method="POST" action="{{ route('admin.customers.send-email') }}" class="inline">
-                        @csrf
-                        <input type="hidden" name="customer_ids[]" value="{{ $customer->id }}">
-                        <input type="hidden" name="subject" value="">
-                        <input type="hidden" name="content" value="">
-                        <button type="button"
-                                onclick="document.getElementById('quick-email-subject').value && this.closest('form').submit()"
-                                class="inline-flex items-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                            <svg class="-ml-0.5 mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            Send Email
-                        </button>
-                    </form>
-
                     <form method="POST" action="{{ route('admin.customers.update', $customer) }}" class="inline">
                         @csrf
                         @method('PATCH')
@@ -378,14 +363,14 @@
                             @endif
                         </button>
                     </form>
-
+{{-- 
                     <button @click="showDeleteModal = true"
                             class="inline-flex items-center px-4 py-2.5 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 transition-colors">
                         <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>
                         Delete Customer
-                    </button>
+                    </button> --}}
                 </div>
             </div>
         </div>

@@ -62,7 +62,14 @@ class CustomerRepository
 
     public function getCustomersWithFilters(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
-        $query = $this->customer->newQuery()->with(['preferences']);
+        $query = $this->customer->newQuery()
+            ->with(['preferences'])
+            ->withCount('orders')
+            ->withSum([
+                'orders as total_spent' => function ($orderQuery) {
+                    $orderQuery->where('payment_status', 'paid');
+                },
+            ], 'total_amount');
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -77,8 +84,12 @@ class CustomerRepository
             $query->where('is_active', $filters['is_active']);
         }
 
-        if (!empty($filters['has_orders'])) {
-            $query->has('orders');
+        if (array_key_exists('has_orders', $filters) && $filters['has_orders'] !== null) {
+            if ($filters['has_orders'] === true) {
+                $query->has('orders');
+            } else {
+                $query->doesntHave('orders');
+            }
         }
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage);

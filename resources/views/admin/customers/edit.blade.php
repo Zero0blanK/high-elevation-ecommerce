@@ -3,7 +3,7 @@
 @section('title', 'Edit Customer — ' . $customer->first_name . ' ' . $customer->last_name)
 
 @section('content')
-<div class="py-6 px-4 sm:px-6 lg:px-8">
+<div>
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
@@ -19,18 +19,6 @@
         </a>
     </div>
 
-    {{-- Success Message --}}
-    @if(session('success'))
-        <div class="mb-6 rounded-lg bg-emerald-50 border border-emerald-200 p-4">
-            <div class="flex items-center gap-3">
-                <svg class="h-5 w-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <p class="text-sm font-medium text-emerald-800">{{ session('success') }}</p>
-            </div>
-        </div>
-    @endif
-
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Left Column — Form --}}
         <div class="lg:col-span-2">
@@ -45,7 +33,7 @@
                         <div>
                             <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name <span class="text-red-500">*</span></label>
                             <input type="text" name="first_name" id="first_name" value="{{ old('first_name', $customer->first_name) }}" required
-                                   class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm @error('first_name') border-red-300 ring-red-300 @enderror">
+                                   class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 py-2 pl-3 pr-2 @error('first_name') border-red-300 ring-red-300 @enderror">
                             @error('first_name')
                                 <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                                     <svg class="h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -57,7 +45,7 @@
                         <div>
                             <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name <span class="text-red-500">*</span></label>
                             <input type="text" name="last_name" id="last_name" value="{{ old('last_name', $customer->last_name) }}" required
-                                   class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm @error('last_name') border-red-300 ring-red-300 @enderror">
+                                   class="block w-full rounded-lg py-2 pl-3 pr-2 border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 @error('last_name') border-red-300 ring-red-300 @enderror">
                             @error('last_name')
                                 <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                                     <svg class="h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -75,7 +63,7 @@
                                     </svg>
                                 </div>
                                 <input type="email" name="email" id="email" value="{{ old('email', $customer->email) }}" required
-                                       class="block w-full pl-9 rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm @error('email') border-red-300 ring-red-300 @enderror">
+                                       class="block w-full pl-9 rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 py-2 pr-2 @error('email') border-red-300 ring-red-300 @enderror">
                             </div>
                             @error('email')
                                 <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
@@ -94,7 +82,7 @@
                                     </svg>
                                 </div>
                                 <input type="text" name="phone" id="phone" value="{{ old('phone', $customer->phone) }}"
-                                       class="block w-full pl-9 rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm @error('phone') border-red-300 ring-red-300 @enderror">
+                                       class="block w-full pl-9 rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 py-2 pr-2 @error('phone') border-red-300 ring-red-300 @enderror">
                             </div>
                             @error('phone')
                                 <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
@@ -107,7 +95,7 @@
                         <div>
                             <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                             <input type="date" name="date_of_birth" id="date_of_birth" value="{{ old('date_of_birth', $customer->date_of_birth?->format('Y-m-d')) }}"
-                                   class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 sm:text-sm @error('date_of_birth') border-red-300 ring-red-300 @enderror">
+                                   class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 py-2 px-3 @error('date_of_birth') border-red-300 ring-red-300 @enderror">
                             @error('date_of_birth')
                                 <p class="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                                     <svg class="h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -251,7 +239,7 @@
             @endif
 
             {{-- Coffee Preferences (read-only) --}}
-            @if($customer->preferences)
+            {{-- @if($customer->preferences)
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h2 class="text-base font-semibold text-gray-900 mb-4">Coffee Preferences</h2>
                     <dl class="space-y-2 text-sm">
@@ -274,8 +262,8 @@
                             </div>
                         @endif
                     </dl>
-                </div>
-            @endif
+                </div> --}}
+            {{-- @endif --}}
         </div>
     </div>
 </div>

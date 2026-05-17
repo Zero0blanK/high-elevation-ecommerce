@@ -44,25 +44,15 @@ class ProductService
 
     public function updateProduct(Product $product, array $data): Product
     {
-        $oldStock = $product->stock_quantity;
+        // Stock updates are handled by InventoryService/Inventory module.
+        unset($data['stock_quantity']);
         
         if (isset($data['name']) && $data['name'] !== $product->name) {
             $data['slug'] = $this->generateUniqueSlug($data['name'], $product->id);
         }
         
         $this->productRepository->update($product, $data);
-        
-        // Log inventory change if stock quantity changed
-        if (isset($data['stock_quantity']) && $data['stock_quantity'] != $oldStock) {
-            app(InventoryService::class)->logInventoryChange(
-                $product->id,
-                'adjustment',
-                $oldStock,
-                $data['stock_quantity'] - $oldStock,
-                'Manual adjustment'
-            );
-        }
-        
+
         return $product->fresh();
     }
 

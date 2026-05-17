@@ -56,7 +56,7 @@
                                 <option value="">Select roast level</option>
                                 <option value="light" @selected(old('roast_level', $product->roast_level) === 'light')>Light</option>
                                 <option value="medium" @selected(old('roast_level', $product->roast_level) === 'medium')>Medium</option>
-                                <option value="medium-dark" @selected(old('roast_level', $product->roast_level) === 'medium-dark')>Medium Dark</option>
+                                <option value="medium_dark" @selected(old('roast_level', $product->roast_level) === 'medium_dark')>Medium Dark</option>
                                 <option value="dark" @selected(old('roast_level', $product->roast_level) === 'dark')>Dark</option>
                             </select>
                             @error('roast_level') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -65,11 +65,11 @@
                             <label for="grind_type" class="block text-sm font-medium text-gray-700 mb-1">Grind Type</label>
                             <select name="grind_type" id="grind_type" class="block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                                 <option value="">Select grind type</option>
-                                <option value="whole-bean" @selected(old('grind_type', $product->grind_type) === 'whole-bean')>Whole Bean</option>
+                                <option value="whole_bean" @selected(old('grind_type', $product->grind_type) === 'whole_bean')>Whole Bean</option>
                                 <option value="coarse" @selected(old('grind_type', $product->grind_type) === 'coarse')>Coarse</option>
                                 <option value="medium" @selected(old('grind_type', $product->grind_type) === 'medium')>Medium</option>
                                 <option value="fine" @selected(old('grind_type', $product->grind_type) === 'fine')>Fine</option>
-                                <option value="extra-fine" @selected(old('grind_type', $product->grind_type) === 'extra-fine')>Extra Fine</option>
+                                <option value="extra_fine" @selected(old('grind_type', $product->grind_type) === 'extra_fine')>Extra Fine</option>
                             </select>
                             @error('grind_type') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -97,13 +97,14 @@
                                     @if($image->is_primary)
                                         <span class="absolute top-2 left-2 bg-amber-600 text-white text-xs font-medium px-2 py-0.5 rounded-md shadow-sm">Primary</span>
                                     @endif
-                                    <form method="POST" action="{{ route('admin.products.delete-image', [$product, $image]) }}" class="absolute top-2 right-2" onsubmit="return confirm('Delete this image?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="h-7 w-7 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all" title="Delete image">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        </button>
-                                    </form>
+                                    <button
+                                        type="submit"
+                                        form="delete-image-{{ $image->id }}"
+                                        onclick="return confirm('Delete this image?')"
+                                        class="absolute top-2 right-2 h-7 w-7 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all"
+                                        title="Delete image">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
                                 </div>
                             @endforeach
                         </div>
@@ -238,13 +239,9 @@
                     <h2 class="text-lg font-semibold text-gray-900 mb-5">Inventory</h2>
                     <div class="space-y-4">
                         <div>
-                            <label for="stock_quantity" class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity <span class="text-red-500">*</span></label>
-                            <input type="number" name="stock_quantity" id="stock_quantity" value="{{ old('stock_quantity', $product->stock_quantity) }}" min="0" required class="block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
-                            @error('stock_quantity') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
                             <label for="low_stock_threshold" class="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
                             <input type="number" name="low_stock_threshold" id="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold) }}" min="0" class="block w-full py-2 px-3 border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <p class="mt-1 text-xs text-gray-500">Manage stock quantity from Inventory.</p>
                             @error('low_stock_threshold') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
@@ -282,5 +279,14 @@
             </button>
         </div>
     </form>
+
+    @if($product->images->count())
+        @foreach($product->images as $image)
+            <form id="delete-image-{{ $image->id }}" method="POST" action="{{ route('admin.products.delete-image', [$product, $image]) }}" class="hidden">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endforeach
+    @endif
 </div>
 @endsection

@@ -73,6 +73,70 @@
         </div>
     </div>
 
+    @php
+        $adminToasts = collect([
+            session('success') ? ['type' => 'success', 'message' => session('success')] : null,
+            session('error') ? ['type' => 'error', 'message' => session('error')] : null,
+            session('warning') ? ['type' => 'warning', 'message' => session('warning')] : null,
+            session('info') ? ['type' => 'info', 'message' => session('info')] : null,
+        ])->filter()->values();
+    @endphp
+
+    <div id="admin-toast-container" class="pointer-events-none fixed top-4 right-0 z-[100] flex w-full max-w-sm flex-col gap-2 px-4"></div>
+    <script>
+        (() => {
+            const container = document.getElementById('admin-toast-container');
+            if (!container) return;
+
+            const typeClasses = {
+                success: 'bg-emerald-600',
+                error: 'bg-red-600',
+                warning: 'bg-amber-500',
+                info: 'bg-sky-600',
+            };
+
+            window.adminToast = (message, type = 'info') => {
+                if (!message) return;
+
+                const toast = document.createElement('div');
+                toast.className = `pointer-events-auto flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm text-white shadow-lg transition-all duration-300 ease-out translate-x-6 opacity-0 ${typeClasses[type] ?? typeClasses.info}`;
+
+                const text = document.createElement('p');
+                text.className = 'font-medium';
+                text.textContent = message;
+
+                const closeButton = document.createElement('button');
+                closeButton.type = 'button';
+                closeButton.className = 'rounded p-0.5 text-white/80 hover:text-white';
+                closeButton.setAttribute('aria-label', 'Dismiss notification');
+                closeButton.innerHTML = '&times;';
+
+                closeButton.addEventListener('click', () => {
+                    toast.classList.add('translate-x-6', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                });
+
+                toast.appendChild(text);
+                toast.appendChild(closeButton);
+                container.appendChild(toast);
+
+                requestAnimationFrame(() => toast.classList.remove('translate-x-6', 'opacity-0'));
+
+                setTimeout(() => {
+                    toast.classList.add('translate-x-6', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            };
+
+            const flashToasts = @json($adminToasts);
+            flashToasts.forEach((toast) => window.adminToast(toast.message, toast.type));
+
+            @if($errors->any())
+                window.adminToast(@json($errors->first()), 'error');
+            @endif
+        })();
+    </script>
+
     @include('components.confirm-modal')
     @stack('scripts')
 </body>

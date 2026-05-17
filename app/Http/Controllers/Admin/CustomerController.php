@@ -22,10 +22,26 @@ class CustomerController extends Controller
 
     public function index(Request $request)
     {
+        $statusFilter = $request->input('is_active', $request->input('status'));
+        $isActive = null;
+
+        if (in_array($statusFilter, ['1', 1, true, 'active'], true)) {
+            $isActive = true;
+        } elseif (in_array($statusFilter, ['0', 0, false, 'inactive'], true)) {
+            $isActive = false;
+        }
+
+        $hasOrders = null;
+        if ($request->has_orders === 'yes') {
+            $hasOrders = true;
+        } elseif ($request->has_orders === 'no') {
+            $hasOrders = false;
+        }
+
         $filters = [
             'search' => $request->search,
-            'is_active' => $request->status === 'active' ? true : ($request->status === 'inactive' ? false : null),
-            'has_orders' => $request->has_orders === 'yes'
+            'is_active' => $isActive,
+            'has_orders' => $hasOrders,
         ];
 
         $customers = $this->customerService->getCustomersWithFilters($filters);

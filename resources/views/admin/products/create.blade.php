@@ -53,7 +53,7 @@
                                 <option value="">Select roast level</option>
                                 <option value="light" @selected(old('roast_level') === 'light')>Light</option>
                                 <option value="medium" @selected(old('roast_level') === 'medium')>Medium</option>
-                                <option value="medium-dark" @selected(old('roast_level') === 'medium-dark')>Medium Dark</option>
+                                <option value="medium_dark" @selected(old('roast_level') === 'medium_dark')>Medium Dark</option>
                                 <option value="dark" @selected(old('roast_level') === 'dark')>Dark</option>
                             </select>
                             @error('roast_level') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -63,11 +63,11 @@
                             <svg class="absolute right-2.5 top-8.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             <select name="grind_type" id="grind_type" class="block w-full border-gray-300 rounded-lg py-2 px-3 appearance-none focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                                 <option value="">Select grind type</option>
-                                <option value="whole-bean" @selected(old('grind_type') === 'whole-bean')>Whole Bean</option>
+                                <option value="whole_bean" @selected(old('grind_type') === 'whole_bean')>Whole Bean</option>
                                 <option value="coarse" @selected(old('grind_type') === 'coarse')>Coarse</option>
                                 <option value="medium" @selected(old('grind_type') === 'medium')>Medium</option>
                                 <option value="fine" @selected(old('grind_type') === 'fine')>Fine</option>
-                                <option value="extra-fine" @selected(old('grind_type') === 'extra-fine')>Extra Fine</option>
+                                <option value="extra_fine" @selected(old('grind_type') === 'extra_fine')>Extra Fine</option>
                             </select>
                             @error('grind_type') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -171,13 +171,13 @@
                     <div class="space-y-4">
                         <div>
                             <label for="low_stock_threshold" class="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
-                            <input type="number" name="low_stock_threshold" id="low_stock_threshold" value="{{ old('low_stock_threshold', 10) }}" min="0" class="block w-full border-gray-300 rounded-lg py-2 pr-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="number" name="low_stock_threshold" id="low_stock_threshold" value="{{ old('low_stock_threshold', 10) }}" min="0" class="block w-full border-gray-300 rounded-lg p-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             <p class="mt-1 text-xs text-gray-500">Stock starts at 0. Use Inventory &gt; Stock In to add stock.</p>
                             @error('low_stock_threshold') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Weight (g)</label>
-                            <input type="number" name="weight" id="weight" value="{{ old('weight') }}" step="0.01" min="0" placeholder="0.00" class="block w-full border-gray-300 rounded-lg py-2 pr-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                            <input type="number" name="weight" id="weight" value="{{ old('weight') }}" step="0.01" min="0" placeholder="0.00" class="block w-full border-gray-300 rounded-lg p-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
                             @error('weight') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>

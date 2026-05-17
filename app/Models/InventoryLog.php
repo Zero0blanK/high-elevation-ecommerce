@@ -30,4 +30,9 @@ class InventoryLog extends Model
     {
         return $this->morphTo();
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(Admin::class, 'created_by');
+    }
 }

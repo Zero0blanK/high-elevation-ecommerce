@@ -80,6 +80,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                     <select name="type" id="type" class="block w-full py-2 px-3 appearance-none border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                        <option value="all">All Reports</option>
                         <option value="sales">Sales</option>
                         <option value="customers">Customers</option>
                         <option value="inventory">Inventory</option>
@@ -91,7 +92,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                     <select name="format" id="format" class="block w-full py-2 px-3 appearance-none border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm">
-                        <option value="csv">CSV</option>
+                        <option value="xlsx">XLSX</option>
                     </select>
                 </div>
                 <div>
@@ -112,4 +113,33 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const periodStartInput = document.getElementById('export_period_start');
+        const periodEndInput = document.getElementById('export_period_end');
+        const periodStartField = periodStartInput.parentElement;
+        const periodEndField = periodEndInput.parentElement;
+
+        function updateDateFields() {
+            const type = typeSelect.value;
+
+            if (type === 'inventory') {
+                periodStartField.style.display = 'none';
+                periodEndField.style.display = 'none';
+                periodStartInput.removeAttribute('required');
+                periodEndInput.removeAttribute('required');
+            } else {
+                periodStartField.style.display = '';
+                periodEndField.style.display = '';
+                periodStartInput.setAttribute('required', 'required');
+                periodEndInput.setAttribute('required', 'required');
+            }
+        }
+
+        typeSelect.addEventListener('change', updateDateFields);
+        updateDateFields();
+    });
+</script>
 @endsection

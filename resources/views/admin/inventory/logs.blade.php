@@ -132,7 +132,11 @@
                                 {{ $log->notes ?? '—' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $log->created_by ?? '—' }}
+                                @if($log->createdBy)
+                                    {{ $log->createdBy->name ?? $log->createdBy->email ?? '—' }}
+                                @else
+                                    —
+                                @endif
                             </td>
                         </tr>
                         @empty
