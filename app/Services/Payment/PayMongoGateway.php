@@ -181,6 +181,30 @@ class PayMongoGateway implements PaymentGatewayInterface
             }
         }
 
+        // Checkout session flow (cards): confirm by checking session/payment status.
+        if (str_starts_with($transactionId, 'cs_')) {
+            $session = $this->getCheckoutSession($transactionId);
+            $sessionStatuses = array_values(array_filter(array_map(
+                static fn ($status) => is_string($status) ? strtolower($status) : null,
+                [
+                    data_get($session, 'attributes.status'),
+                    data_get($session, 'attributes.payment_intent.attributes.status'),
+                    data_get($session, 'attributes.payments.0.attributes.status'),
+                    data_get($session, 'attributes.payments.0.status'),
+                ]
+            )));
+
+            if (in_array('paid', $sessionStatuses, true)) {
+                $this->markPaymentCompleted($payment, $session);
+                return true;
+            }
+
+            if (array_intersect($sessionStatuses, ['failed', 'cancelled', 'expired'])) {
+                $this->markPaymentFailed($payment, $session);
+                return false;
+            }
+        }
+
         // For checkout sessions/cards, do not force a paid state from redirect alone.
         return false;
     }
@@ -267,6 +291,22 @@ class PayMongoGateway implements PaymentGatewayInterface
         return (array) $response->json('data');
     }
 
+    protected function getCheckoutSession(string $sessionId): array
+    {
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->get("{$this->baseUrl}/checkout_sessions/{$sessionId}");
+
+        if ($response->failed()) {
+            Log::error('PayMongo checkout session fetch failed', [
+                'session_id' => $sessionId,
+                'response' => $response->json(),
+            ]);
+            throw new \Exception('Failed to verify PayMongo checkout session.');
+        }
+
+        return (array) $response->json('data');
+    }
+
     protected function createPaymentFromSource(string $sourceId, int $amount, string $currency = 'PHP'): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
@@ -306,6 +346,9 @@ class PayMongoGateway implements PaymentGatewayInterface
         }
 
         $order = $payment->order;
+        app(\App\Services\CheckoutService::class)->finalizeOrderPlacement($order);
+        $order = $order->fresh();
+
         if ($order->payment_status !== 'paid' || $order->status === 'pending') {
             $order->update([
                 'payment_status' => 'paid',

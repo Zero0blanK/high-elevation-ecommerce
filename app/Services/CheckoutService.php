@@ -6,6 +6,7 @@ use App\Repositories\CartRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\CustomerRepository;
 use App\Models\Customer;
+use App\Models\InventoryLog;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
@@ -140,14 +141,6 @@ class CheckoutService
                     'total_price' => $price * $item->quantity,
                     'product_options' => $item->product_options,
                 ]);
-
-                // Update inventory
-                $this->inventoryService->adjustStock(
-                    $item->product_id,
-                    -$item->quantity,
-                    'sale',
-                    $order
-                );
             }
 
             // Create order addresses
@@ -185,13 +178,12 @@ class CheckoutService
                 if ($paymentMethod === 'paypal' && !empty($data['paypal_order_id'])) {
                     $order->update(['payment_status' => 'paid', 'status' => 'processing']);
                     Payment::where('transaction_id', $data['paypal_order_id'])->update(['status' => 'completed']);
+                    $this->finalizeOrderPlacement($order);
                 }
             } else {
                 $this->createPaymentRecord($order, 'cod', 'pending');
+                $this->finalizeOrderPlacement($order);
             }
-
-            // Clear the cart
-            $this->cartService->clearCart($customer->id);
 
             return $result;
         });
@@ -259,13 +251,21 @@ class CheckoutService
             ->whereIn('payment_gateway', ['paymongo', 'gcash', 'paymongo_card'])
             ->first();
 
+        $confirmed = false;
         if ($payment) {
             $gatewayName = $payment->payment_gateway ?: $order->payment_method ?: 'paymongo';
             $gateway = \App\Services\Payment\PaymentGatewayFactory::create($gatewayName);
-            $gateway->confirmPayment((string) $payment->transaction_id, $order);
+            $confirmed = $gateway->confirmPayment((string) $payment->transaction_id, $order);
         }
 
-        return $order->fresh();
+        $order = $order->fresh();
+
+        if (!$confirmed || $order->payment_status !== 'paid') {
+            $this->failOrderPayment($order, $payment);
+            throw new \Exception('Payment was not completed.');
+        }
+
+        return $order;
     }
 
     /**
@@ -301,6 +301,11 @@ class CheckoutService
                 ->whereIn('payment_gateway', ['paymongo', 'gcash', 'paymongo_card'])
                 ->first();
 
+            // Never downgrade an already paid order to failed.
+            if (($payment && $payment->status === 'completed') || $order->payment_status === 'paid') {
+                return $order->fresh();
+            }
+
             if ($payment && $payment->status !== 'failed') {
                 $payment->update(['status' => 'failed']);
             }
@@ -309,23 +314,32 @@ class CheckoutService
                 $order->update(['payment_status' => 'failed']);
             }
 
-            // Prevent duplicate cart/inventory restoration on repeated callbacks/webhooks.
+            // Prevent duplicate processing on repeated callbacks/webhooks.
             if ($order->status !== 'cancelled') {
-                foreach ($order->items as $item) {
-                    $this->inventoryService->adjustStock(
-                        $item->product_id,
-                        $item->quantity,
-                        'return',
-                        $order,
-                        'Payment failed - stock restored'
-                    );
+                $inventoryCommitted = $this->hasCommittedInventory($order);
 
-                    $this->cartService->addToCart(
-                        $item->product_id,
-                        $item->quantity,
-                        $item->product_options ?? [],
-                        $order->customer_id
-                    );
+                if ($inventoryCommitted) {
+                    $currentCartItems = $this->cartRepository->getCartWithProducts($order->customer_id, null);
+                    $shouldRestoreCartItems = $currentCartItems->isEmpty();
+
+                    foreach ($order->items as $item) {
+                        $this->inventoryService->adjustStock(
+                            $item->product_id,
+                            $item->quantity,
+                            'return',
+                            $order,
+                            'Payment failed - stock restored'
+                        );
+
+                        if ($shouldRestoreCartItems) {
+                            $this->cartService->addToCart(
+                                $item->product_id,
+                                $item->quantity,
+                                $item->product_options ?? [],
+                                $order->customer_id
+                            );
+                        }
+                    }
                 }
 
                 $order->update(['status' => 'cancelled']);
@@ -333,5 +347,38 @@ class CheckoutService
 
             return $order->fresh();
         });
+    }
+
+    public function finalizeOrderPlacement(Order $order): Order
+    {
+        return DB::transaction(function () use ($order) {
+            $order->loadMissing(['items']);
+
+            if ($this->hasCommittedInventory($order)) {
+                return $order->fresh();
+            }
+
+            foreach ($order->items as $item) {
+                $this->inventoryService->adjustStock(
+                    $item->product_id,
+                    -$item->quantity,
+                    'sale',
+                    $order,
+                    'Payment confirmed - stock deducted'
+                );
+            }
+
+            $this->cartService->clearCart($order->customer_id);
+
+            return $order->fresh();
+        });
+    }
+
+    protected function hasCommittedInventory(Order $order): bool
+    {
+        return InventoryLog::where('reference_type', Order::class)
+            ->where('reference_id', $order->id)
+            ->where('type', 'sale')
+            ->exists();
     }
 }

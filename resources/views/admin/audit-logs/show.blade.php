@@ -62,6 +62,12 @@
                     <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Description</dt>
                     <dd class="mt-1 text-sm text-gray-900">{{ $auditLog->description ?? '—' }}</dd>
                 </div>
+                @if($auditLog->return_reason)
+                    <div class="md:col-span-2">
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Return Reason</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $auditLog->return_reason }}</dd>
+                    </div>
+                @endif
                 <div>
                     <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</dt>
                     <dd class="mt-1 text-sm text-gray-900 font-mono">{{ $auditLog->ip_address ?? '—' }}</dd>

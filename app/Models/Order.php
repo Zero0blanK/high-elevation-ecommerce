@@ -26,6 +26,10 @@ class Order extends Model
         'shipping_method',
         'tracking_number',
         'notes',
+        'return_reason',
+        'return_request_status',
+        'return_requested_at',
+        'return_decided_at',
         'shipped_at',
         'delivered_at'
     ];
@@ -36,6 +40,8 @@ class Order extends Model
         'shipping_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'return_requested_at' => 'datetime',
+        'return_decided_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];
@@ -112,6 +118,24 @@ class Order extends Model
     public function canBeShipped()
     {
         return $this->status === 'processing' && $this->isPaid();
+    }
+
+    public function canBeReturned(): bool
+    {
+        if ($this->status !== 'delivered' || !$this->delivered_at) {
+            return false;
+        }
+
+        if ($this->return_request_status !== null) {
+            return false;
+        }
+
+        return now()->lessThanOrEqualTo($this->delivered_at->copy()->addWeek());
+    }
+
+    public function hasPendingReturnRequest(): bool
+    {
+        return $this->return_request_status === 'pending';
     }
 
     public function scopePending($query)

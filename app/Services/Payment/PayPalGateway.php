@@ -108,6 +108,9 @@ class PayPalGateway implements PaymentGatewayInterface
                     ]),
                 ]);
 
+                app(\App\Services\CheckoutService::class)->finalizeOrderPlacement($order);
+                $order = $order->fresh();
+
                 $order->update([
                     'payment_status' => 'paid',
                     'status' => 'processing',

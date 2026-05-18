@@ -97,8 +97,10 @@
                 <svg class="absolute right-2.5 top-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 <select name="status" id="status" class="w-full rounded-lg appearance-none px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">
                     <option value="">All Statuses</option>
-                    @foreach(['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as $status)
-                        <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
+                    @foreach(['pending_approval', 'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as $status)
+                        <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
+                            {{ $status === 'pending_approval' ? 'Return Approval' : ucfirst($status) }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -180,11 +182,23 @@
                                         'cancelled'  => 'bg-red-100 text-red-800',
                                         'refunded'   => 'bg-gray-100 text-gray-800',
                                     ];
+                                    $displayStatus = $order->return_request_status === 'pending'
+                                        ? 'pending_approval'
+                                        : $order->status;
+                                    $displayStatusLabel = $displayStatus === 'pending_approval'
+                                        ? 'Return Approval'
+                                        : ucfirst($displayStatus);
+                                    $displayStatusColor = $displayStatus === 'pending_approval'
+                                        ? 'bg-amber-100 text-amber-800'
+                                        : ($statusColors[$displayStatus] ?? 'bg-gray-100 text-gray-800');
                                 @endphp
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $statusColors[$order->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                    <span class="h-1.5 w-1.5 rounded-full {{ str_replace(['bg-yellow-100 text-yellow-800','bg-blue-100 text-blue-800','bg-purple-100 text-purple-800','bg-green-100 text-green-800','bg-red-100 text-red-800','bg-gray-100 text-gray-800'], ['bg-yellow-500','bg-blue-500','bg-purple-500','bg-green-500','bg-red-500','bg-gray-500'], $statusColors[$order->status] ?? 'bg-gray-500') }}"></span>
-                                    {{ ucfirst($order->status) }}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $displayStatusColor }}">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $displayStatus === 'pending_approval' ? 'bg-amber-500' : str_replace(['bg-yellow-100 text-yellow-800','bg-blue-100 text-blue-800','bg-purple-100 text-purple-800','bg-green-100 text-green-800','bg-red-100 text-red-800','bg-gray-100 text-gray-800'], ['bg-yellow-500','bg-blue-500','bg-purple-500','bg-green-500','bg-red-500','bg-gray-500'], $statusColors[$displayStatus] ?? 'bg-gray-500') }}"></span>
+                                    {{ $displayStatusLabel }}
                                 </span>
+                                @if($order->return_request_status === 'denied')
+                                    <p class="mt-1 text-[11px] font-medium text-red-700">Return denied</p>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600">
                                 <p class="font-mono">{{ $order->tracking_number ?: '—' }}</p>

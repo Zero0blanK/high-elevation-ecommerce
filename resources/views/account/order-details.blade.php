@@ -38,6 +38,7 @@
                             @elseif($order->status === 'shipped') bg-purple-100
                             @elseif($order->status === 'delivered') bg-green-100
                             @elseif($order->status === 'cancelled') bg-red-100
+                            @elseif($order->status === 'refunded') bg-gray-100 text-gray-800
                             @else bg-gray-100
                             @endif">
                             {{ ucfirst($order->status) }}
@@ -55,6 +56,60 @@
                     </div>
                 </div>
             </div>
+
+            @if($order->return_request_status)
+                <div class="mb-6 rounded-xl border px-5 py-4
+                    @if($order->return_request_status === 'pending') border-amber-200 bg-amber-50
+                    @elseif($order->return_request_status === 'approved') border-green-200 bg-green-50
+                    @else border-red-200 bg-red-50
+                    @endif">
+                    <p class="text-sm font-semibold
+                        @if($order->return_request_status === 'pending') text-amber-800
+                        @elseif($order->return_request_status === 'approved') text-green-800
+                        @else text-red-800
+                        @endif">
+                        Return Request: {{ ucfirst($order->return_request_status) }}
+                    </p>
+                    @if($order->return_reason)
+                        <p class="mt-1 text-sm text-gray-700">Reason: {{ $order->return_reason }}</p>
+                    @endif
+                    @if($order->return_requested_at)
+                        <p class="mt-1 text-xs text-gray-500">Requested at {{ $order->return_requested_at->format('M d, Y g:i A') }}</p>
+                    @endif
+                </div>
+            @elseif($order->canBeReturned())
+                <div class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-200 bg-gray-50">
+                        <h2 class="text-sm font-semibold text-gray-900">Request Product Return</h2>
+                    </div>
+                    <form action="{{ route('orders.return', $order) }}" method="POST" class="p-5 space-y-3">
+                        @csrf
+                        @method('PATCH')
+                        <p class="text-xs text-gray-500">Returns are only allowed within 7 days after delivery.</p>
+                        <div>
+                            <label for="return_reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for return</label>
+                            <textarea
+                                id="return_reason"
+                                name="return_reason"
+                                rows="3"
+                                required
+                                maxlength="1000"
+                                placeholder="Tell us why you want to return this order..."
+                                class="w-full rounded-lg px-3 py-2 border border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500">{{ old('return_reason') }}</textarea>
+                            @error('return_reason')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <button type="submit"
+                                data-confirm-message="Submit this return request to admin for approval?"
+                                data-confirm-button="Submit Return Request"
+                                data-confirm-variant="danger"
+                                class="text-sm font-medium text-red-600 hover:text-red-700 px-3 py-2 border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                            Submit Return Request
+                        </button>
+                    </form>
+                </div>
+            @endif
 
             <!-- Order Tracking -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">

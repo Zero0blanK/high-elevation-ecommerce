@@ -185,6 +185,27 @@ class OrderController extends Controller
         return back()->with('success', 'Order marked as received successfully.');
     }
 
+    public function returnOrder(Request $request, Order $order)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        if ($order->customer_id !== $customer->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'return_reason' => 'required|string|max:1000',
+        ]);
+
+        if (!$order->canBeReturned()) {
+            return back()->withErrors(['error' => 'This order is no longer eligible for return.']);
+        }
+
+        $this->orderService->requestReturn($order, $validated['return_reason']);
+
+        return back()->with('success', 'Return request submitted. Waiting for admin approval.');
+    }
+
     public function trackPackage(Request $request)
     {
         $request->validate([

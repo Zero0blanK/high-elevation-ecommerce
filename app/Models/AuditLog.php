@@ -85,6 +85,21 @@ class AuditLog extends Model
         return $fields;
     }
 
+    public function getReturnReasonAttribute(): ?string
+    {
+        $newReason = data_get($this->new_values, 'return_reason');
+        if (is_string($newReason) && trim($newReason) !== '') {
+            return trim($newReason);
+        }
+
+        $oldReason = data_get($this->old_values, 'return_reason');
+        if (is_string($oldReason) && trim($oldReason) !== '') {
+            return trim($oldReason);
+        }
+
+        return null;
+    }
+
     public static function log(
         string $action,
         ?string $description = null,

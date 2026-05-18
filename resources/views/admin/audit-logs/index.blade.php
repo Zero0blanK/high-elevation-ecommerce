@@ -130,7 +130,12 @@
                                 {{ $log->model_label }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                                {{ $log->description ?? '—' }}
+                                <div>{{ $log->description ?? '—' }}</div>
+                                @if($log->return_reason)
+                                    <div class="mt-1 text-xs text-amber-700 truncate" title="{{ $log->return_reason }}">
+                                        Return reason: {{ \Illuminate\Support\Str::limit($log->return_reason, 80) }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                                 {{ $log->ip_address ?? '—' }}

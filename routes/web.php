@@ -90,6 +90,7 @@ Route::middleware(['customer.auth'])->group(function () {
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
         Route::patch('/{order}/cancel', [OrderController::class, 'cancelOrder'])->name('cancel');
         Route::patch('/{order}/confirm-received', [OrderController::class, 'confirmReceived'])->name('confirm-received');
+        Route::patch('/{order}/return', [OrderController::class, 'returnOrder'])->name('return');
     });
 
     // Customer Account Routes
@@ -171,6 +172,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [AdminOrderController::class, 'index'])->name('index');
             Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
             Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
+            Route::patch('/{order}/return/approve', [AdminOrderController::class, 'approveReturn'])->name('return.approve');
+            Route::patch('/{order}/return/deny', [AdminOrderController::class, 'denyReturn'])->name('return.deny');
             Route::post('/{order}/refund', [AdminOrderController::class, 'refund'])->name('refund');
             Route::get('/{order}/invoice', [AdminOrderController::class, 'invoice'])->name('invoice');
             Route::get('/{order}/shipping-label', [AdminOrderController::class, 'printShippingLabel'])->name('shipping-label');

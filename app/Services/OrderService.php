@@ -122,6 +122,9 @@ class OrderService
                 $this->restoreInventoryFromOrder($order);
                 Mail::to($order->customer->email)->send(new \App\Mail\OrderCancelled($order));
                 break;
+            case 'refunded':
+                $this->restoreInventoryFromOrder($order);
+                break;
         }
 
         return $order->fresh();
@@ -183,6 +186,48 @@ class OrderService
         }
 
         return $this->updateOrderStatus($order, 'delivered');
+    }
+
+    public function requestReturn(Order $order, string $reason): Order
+    {
+        if (!$order->canBeReturned()) {
+            throw new \Exception('This order is no longer eligible for return.');
+        }
+
+        $this->orderRepository->update($order, [
+            'return_reason' => trim($reason),
+            'return_request_status' => 'pending',
+            'return_requested_at' => now(),
+            'return_decided_at' => null,
+        ]);
+
+        return $order->fresh();
+    }
+
+    public function approveReturn(Order $order): Order
+    {
+        if (!$order->hasPendingReturnRequest()) {
+            throw new \Exception('This order has no pending return request.');
+        }
+
+        return $this->updateOrderStatus($order, 'refunded', [
+            'return_request_status' => 'approved',
+            'return_decided_at' => now(),
+        ]);
+    }
+
+    public function denyReturn(Order $order): Order
+    {
+        if (!$order->hasPendingReturnRequest()) {
+            throw new \Exception('This order has no pending return request.');
+        }
+
+        $this->orderRepository->update($order, [
+            'return_request_status' => 'denied',
+            'return_decided_at' => now(),
+        ]);
+
+        return $order->fresh();
     }
 
     public function createPayment(Order $order, array $paymentData): \App\Models\Payment

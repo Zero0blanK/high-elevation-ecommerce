@@ -160,8 +160,8 @@ class ImprovedOrderManagementTest extends TestCase
         $payment = Payment::where('order_id', $order->id)->firstOrFail();
 
         $this->assertEquals('pending', $order->payment_status);
-        $this->assertEquals(0, ShoppingCart::where('customer_id', $customer->id)->count());
-        $this->assertEquals(8, $product->fresh()->stock_quantity);
+        $this->assertEquals(1, ShoppingCart::where('customer_id', $customer->id)->count());
+        $this->assertEquals(10, $product->fresh()->stock_quantity);
         $this->assertEquals('pending', $payment->status);
 
         $failedResponse = $this->actingAs($customer, 'customer')
@@ -238,8 +238,8 @@ class ImprovedOrderManagementTest extends TestCase
         $successResponse = $this->actingAs($customer, 'customer')
             ->get(route('checkout.paymongo.success', ['orderNumber' => $order->order_number]));
 
-        $successResponse->assertStatus(200);
-        $this->assertEquals('pending', $order->fresh()->payment_status);
-        $this->assertEquals('pending', $order->fresh()->status);
+        $successResponse->assertRedirect(route('checkout.index'));
+        $this->assertEquals('failed', $order->fresh()->payment_status);
+        $this->assertEquals('cancelled', $order->fresh()->status);
     }
 }

@@ -114,7 +114,11 @@ class OrderRepository
         $query = $this->order->newQuery()->with(['customer', 'items.product']);
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if ($filters['status'] === 'pending_approval') {
+                $query->where('return_request_status', 'pending');
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
         if (!empty($filters['payment_status'])) {
@@ -164,6 +168,7 @@ class OrderRepository
             'shipped' => $orders['shipped'] ?? 0,
             'delivered' => $orders['delivered'] ?? 0,
             'cancelled' => $orders['cancelled'] ?? 0,
+            'refunded' => $orders['refunded'] ?? 0,
         ];
     }
 

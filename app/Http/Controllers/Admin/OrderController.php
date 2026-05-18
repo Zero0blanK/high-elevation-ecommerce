@@ -102,4 +102,24 @@ class OrderController extends Controller
             return back()->with('error', 'Error processing refund: ' . $e->getMessage());
         }
     }
+
+    public function approveReturn(Order $order)
+    {
+        try {
+            $this->orderService->approveReturn($order);
+            return back()->with('success', 'Return request approved and order marked as refunded.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error approving return: ' . $e->getMessage());
+        }
+    }
+
+    public function denyReturn(Order $order)
+    {
+        try {
+            $this->orderService->denyReturn($order);
+            return back()->with('success', 'Return request denied.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error denying return: ' . $e->getMessage());
+        }
+    }
 }

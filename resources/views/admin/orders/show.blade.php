@@ -304,6 +304,61 @@
                 </form>
             </div>
 
+            @if($order->return_request_status)
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-base font-semibold text-gray-900 mb-4">Return Request</h2>
+                    <div class="rounded-lg border px-4 py-3
+                        @if($order->return_request_status === 'pending') border-amber-200 bg-amber-50
+                        @elseif($order->return_request_status === 'approved') border-green-200 bg-green-50
+                        @else border-red-200 bg-red-50
+                        @endif">
+                        <p class="text-sm font-semibold
+                            @if($order->return_request_status === 'pending') text-amber-800
+                            @elseif($order->return_request_status === 'approved') text-green-800
+                            @else text-red-800
+                            @endif">
+                            {{ ucfirst($order->return_request_status) }}
+                        </p>
+                        @if($order->return_reason)
+                            <p class="mt-1 text-sm text-gray-700"><span class="font-medium">Reason:</span> {{ $order->return_reason }}</p>
+                        @endif
+                        @if($order->return_requested_at)
+                            <p class="mt-1 text-xs text-gray-500">Requested at {{ $order->return_requested_at->format('M d, Y g:i A') }}</p>
+                        @endif
+                        @if($order->return_decided_at)
+                            <p class="mt-1 text-xs text-gray-500">Decided at {{ $order->return_decided_at->format('M d, Y g:i A') }}</p>
+                        @endif
+                    </div>
+
+                    @if($order->return_request_status === 'pending')
+                        <div class="mt-4 flex gap-3">
+                            <form action="{{ route('admin.orders.return.approve', $order) }}" method="POST" class="flex-1">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit"
+                                        data-confirm-message="Approve this return request and mark order as refunded?"
+                                        data-confirm-button="Approve Return"
+                                        data-confirm-variant="primary"
+                                        class="w-full bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors text-sm">
+                                    Approve Return
+                                </button>
+                            </form>
+                            <form action="{{ route('admin.orders.return.deny', $order) }}" method="POST" class="flex-1">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit"
+                                        data-confirm-message="Deny this return request?"
+                                        data-confirm-button="Deny Return"
+                                        data-confirm-variant="danger"
+                                        class="w-full bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors text-sm">
+                                    Deny Return
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             {{-- Customer Info --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 class="text-base font-semibold text-gray-900 mb-4">Customer Info</h2>

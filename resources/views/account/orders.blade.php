@@ -54,6 +54,10 @@
                            class="whitespace-nowrap py-3 px-1 border-b-2 text-sm font-medium {{ request('status') == 'cancelled' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                             Cancelled <span class="ml-1.5 py-0.5 px-2 rounded-full text-xs bg-gray-100 text-gray-700">{{ $orderCounts['cancelled'] ?? 0 }}</span>
                         </a>
+                        <a href="{{ route('orders.index', ['status' => 'refunded']) }}"
+                           class="whitespace-nowrap py-3 px-1 border-b-2 text-sm font-medium {{ request('status') == 'refunded' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                            Refunded <span class="ml-1.5 py-0.5 px-2 rounded-full text-xs bg-gray-100 text-gray-700">{{ $orderCounts['refunded'] ?? 0 }}</span>
+                        </a>
                     </nav>
                 </div>
             </div>
@@ -95,6 +99,7 @@
                                             @elseif($order->status === 'shipped') bg-purple-100 text-purple-800
                                             @elseif($order->status === 'delivered') bg-green-100 text-green-800
                                             @elseif($order->status === 'cancelled') bg-red-100 text-red-800
+                                            @elseif($order->status === 'refunded') bg-gray-100 text-gray-800
                                             @else bg-gray-100 text-gray-800
                                             @endif">
                                             {{ ucfirst($order->status) }}
@@ -109,25 +114,47 @@
 
                             <!-- Order Items Preview -->
                             <div class="p-5">
-                                @foreach($order->items->take(3) as $item)
+                                @php
+                                    $groupedOrderItems = $order->items
+                                        ->groupBy(fn($orderItem) => $orderItem->product_id ?? $orderItem->product_name ?? $orderItem->id)
+                                        ->map(function ($items) {
+                                            $firstItem = $items->first();
+
+                                            return [
+                                                'preview' => $firstItem,
+                                                'quantity' => $items->sum('quantity'),
+                                                'line_total' => $items->sum(function ($item) {
+                                                    $unitPrice = $item->unit_price ?? $item->price ?? 0;
+                                                    return (float) ($item->total_price ?? ($unitPrice * $item->quantity));
+                                                }),
+                                            ];
+                                        })
+                                        ->values();
+                                @endphp
+
+                                @foreach($groupedOrderItems->take(3) as $groupedItem)
+                                    @php
+                                        $item = $groupedItem['preview'];
+                                        $itemName = $item->product->name ?? $item->product_name ?? 'Product Unavailable';
+                                    @endphp
                                     <div class="flex items-center gap-4 {{ !$loop->last ? 'mb-3 pb-3 border-b border-gray-100' : '' }}">
                                         <div class="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-gray-100">
                                             <img src="{{ $item->product->primaryImage?->image_url ?? '/images/placeholder-coffee.jpg' }}"
-                                                 alt="{{ $item->product->name }}"
+                                                 alt="{{ $itemName }}"
                                                  class="w-full h-full object-cover">
                                         </div>
                                         <div class="flex-1 min-w-0">
-                                            <h4 class="text-sm font-medium text-gray-900 truncate">{{ $item->product->name }}</h4>
-                                            <p class="text-xs text-gray-500">Qty: {{ $item->quantity }}
+                                            <h4 class="text-sm font-medium text-gray-900 truncate">{{ $itemName }}</h4>
+                                            <p class="text-xs text-gray-500">Qty: {{ $groupedItem['quantity'] }}
                                                 @if($item->product_variant) · {{ $item->product_variant }} @endif
                                             </p>
                                         </div>
-                                        <span class="text-sm font-medium text-gray-900">₱{{ number_format(($item->product->is_on_sale ? $item->product->sale_price : $item->product->price) * $item->quantity, 2) }}</span>
+                                        <span class="text-sm font-medium text-gray-900">₱{{ number_format($groupedItem['line_total'], 2) }}</span>
                                     </div>
                                 @endforeach
 
-                                @if($order->items->count() > 3)
-                                    <p class="mt-3 text-xs text-gray-500">+ {{ $order->items->count() - 3 }} more item(s)</p>
+                                @if($groupedOrderItems->count() > 3)
+                                    <p class="mt-3 text-xs text-gray-500">+ {{ $groupedOrderItems->count() - 3 }} more item(s)</p>
                                 @endif
                             </div>
 
@@ -135,6 +162,13 @@
                             <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 flex items-center justify-between">
                                 <div class="text-xs text-gray-500">
                                     <p>{{ $order->items->sum('quantity') }} item(s)</p>
+                                    @if($order->return_request_status === 'pending')
+                                        <p class="mt-1 text-amber-700 font-medium">Return request pending admin approval</p>
+                                    @elseif($order->return_request_status === 'denied')
+                                        <p class="mt-1 text-red-700 font-medium">Return request denied</p>
+                                    @elseif($order->return_request_status === 'approved')
+                                        <p class="mt-1 text-green-700 font-medium">Return request approved</p>
+                                    @endif
                                     @if($order->tracking_number)
                                         <p class="mt-1">Tracking #: <span class="font-mono text-gray-700">{{ $order->tracking_number }}</span></p>
                                         <p>

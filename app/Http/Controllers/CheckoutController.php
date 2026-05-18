@@ -96,7 +96,7 @@ class CheckoutController extends Controller
             return view('checkout.success', compact('order'));
         } catch (\Exception $e) {
             Log::error('PayMongo success callback failed: ' . $e->getMessage());
-            return redirect()->route('home')->with('error', 'Payment verification failed.');
+            return redirect()->route('checkout.index')->with('error', 'Payment was not completed.');
         }
     }
 
@@ -107,7 +107,7 @@ class CheckoutController extends Controller
             $this->checkoutService->handlePayMongoFailed($orderNumber, $customer->id);
 
             return redirect()->route('checkout.index')
-                ->with('error', 'PayMongo payment failed. Your items were returned to your cart.');
+                ->with('error', 'Payment failed. Your order was not completed.');
         } catch (\Exception $e) {
             Log::error('PayMongo failed callback failed: ' . $e->getMessage());
             return redirect()->route('cart.index')->with('error', 'An error occurred. Please try again.');
