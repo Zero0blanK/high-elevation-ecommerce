@@ -153,14 +153,12 @@ class OrderController extends Controller
             abort(403);
         }
 
-        // Only allow cancellation for pending or processing orders
-        if (!in_array($order->status, ['pending', 'processing'])) {
-            return back()->withErrors(['error' => 'This order cannot be cancelled.']);
+        try {
+            $this->orderService->cancelOrder($order);
+            return back()->with('success', 'Order has been cancelled successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        $order->update(['status' => 'cancelled']);
-
-        return back()->with('success', 'Order has been cancelled successfully.');
     }
 
     public function confirmReceived(Order $order)
@@ -172,17 +170,12 @@ class OrderController extends Controller
             abort(403);
         }
 
-        // Only allow confirmation for shipped orders
-        if ($order->status !== 'shipped') {
-            return back()->withErrors(['error' => 'This order cannot be marked as received.']);
+        try {
+            $this->orderService->confirmDelivery($order);
+            return back()->with('success', 'Order marked as received successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        $order->update([
-            'status' => 'delivered',
-            'delivered_at' => now()
-        ]);
-
-        return back()->with('success', 'Order marked as received successfully.');
     }
 
     public function returnOrder(Request $request, Order $order)

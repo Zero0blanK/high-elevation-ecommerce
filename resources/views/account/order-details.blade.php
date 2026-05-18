@@ -129,11 +129,15 @@
                         ];
                         $currentStepIndex = array_search($order->status, array_column($trackingSteps, 'status'));
                         if ($currentStepIndex === false) $currentStepIndex = 0;
+                        
+                        $stepCount = count($trackingSteps);
+                        $offset = 100 / (2 * $stepCount);
+                        $lineWidth = ($currentStepIndex / $stepCount) * 100;
                     @endphp
 
                     <div class="flex items-center justify-between relative">
-                        <div class="absolute top-4 left-0 right-0 h-0.5 bg-gray-200"></div>
-                        <div class="absolute top-4 left-0 h-0.5 bg-green-500" style="width: {{ $currentStepIndex > 0 ? ($currentStepIndex / (count($trackingSteps) - 1)) * 100 : 0 }}%"></div>
+                        <div class="absolute top-4 h-0.5 bg-gray-200" style="left: {{ $offset }}%; right: {{ $offset }}%;"></div>
+                        <div class="absolute top-4 h-0.5 bg-green-500" style="left: {{ $offset }}%; width: {{ $lineWidth }}%;"></div>
 
                         @foreach($trackingSteps as $index => $step)
                             <div class="relative flex flex-col items-center flex-1">

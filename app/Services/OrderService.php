@@ -116,7 +116,15 @@ class OrderService
                 $this->orderRepository->update($order, ['shipped_at' => now()]);
                 break;
             case 'delivered':
-                $this->orderRepository->update($order, ['delivered_at' => now()]);
+                $updateData = ['delivered_at' => now()];
+                if (strtolower($order->payment_method) === 'cod') {
+                    $updateData['payment_status'] = 'paid';
+                    $order->payments()->where('status', 'pending')->update([
+                        'status' => 'completed',
+                        'processed_at' => now()
+                    ]);
+                }
+                $this->orderRepository->update($order, $updateData);
                 break;
             case 'cancelled':
                 $this->restoreInventoryFromOrder($order);
